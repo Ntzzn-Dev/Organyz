@@ -62,7 +62,7 @@ class _repositoryPageState extends State<NovaPagina> {
                       context,
                       'Adicionar Link',
                       ['Título', 'Link'],
-                      (valores) async {
+                      onConfirm: (valores) async {
                         await DatabaseHelper().insertLink(
                           valores[0],
                           valores[1],
@@ -84,19 +84,22 @@ class _repositoryPageState extends State<NovaPagina> {
                 Spacer(),
                 ElevatedButton(
                   onPressed: () async {
-                    showCustomPopup(context, 'Adicionar Nota', ['Título'], (
-                      valores,
-                    ) async {
-                      await DatabaseHelper().insertNote(
-                        valores[0],
-                        widget.id,
-                        ultimaOrdem,
-                      );
-                      await _loadItems();
-                      await ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Nota Adicionada')),
-                      );
-                    });
+                    showCustomPopup(
+                      context,
+                      'Adicionar Nota',
+                      ['Título'],
+                      onConfirm: (valores) async {
+                        await DatabaseHelper().insertNote(
+                          valores[0],
+                          widget.id,
+                          ultimaOrdem,
+                        );
+                        await _loadItems();
+                        await ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Nota Adicionada')),
+                        );
+                      },
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.all(20),
@@ -110,7 +113,7 @@ class _repositoryPageState extends State<NovaPagina> {
                       context,
                       'Adicionar Tarefa',
                       ['Título', 'Descrição', 'Data Final'],
-                      (valores) async {
+                      onConfirm: (valores) async {
                         DateTime date = DateFormat(
                           'dd/MM/yyyy',
                         ).parse(valores[2]);
@@ -204,25 +207,23 @@ class _repositoryPageState extends State<NovaPagina> {
                       });
                     },
                     onPressedOpen: () async {
-                      setState(() {
-                        int state = item['estado'];
+                      int state = item['estado'];
+                      state++;
 
-                        state = state + 1;
-                        if (state >= 3) {
-                          state = 0;
-                          showCustomPopup(context, 'Reiniciar estado?', [], (
-                            valores,
-                          ) async {
-                            if (valores[0] == 'true') {
-                              DatabaseHelper().updateTask(item['id'], state);
-                              _loadItems();
-                            }
-                          });
-                        } else {
-                          DatabaseHelper().updateTask(item['id'], state);
-                          _loadItems();
+                      if (state >= 3) {
+                        state = 0;
+
+                        bool aceito = await showCustomPopup(
+                          context,
+                          'Reiniciar estado?',
+                          [],
+                        );
+                        if (!aceito) {
+                          return;
                         }
-                      });
+                      }
+                      await DatabaseHelper().updateTask(item['id'], state);
+                      _loadItems();
                     },
                   );
                 } else {

@@ -4,6 +4,7 @@ import 'database_helper.dart';
 import 'popup.dart';
 import 'repository.dart';
 import 'themes.dart';
+import 'calendario.dart';
 
 void main() async {
   /*WidgetsFlutterBinding.ensureInitialized();
@@ -58,6 +59,13 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  void _openCalendar() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => CalendarPage()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -66,25 +74,45 @@ class _HomePageState extends State<HomePage> {
         children: [
           Padding(
             padding: const EdgeInsets.all(16.0),
-            child: ElevatedButton(
-              onPressed: () async {
-                showCustomPopup(
-                  context,
-                  'Adicionar Repositório',
-                  ['Título', 'Subtitulo'],
-                  (valores) async {
-                    await DatabaseHelper().insertItem(valores[0], valores[1]);
-                    await _loadItems();
-                    await ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Repositório criado')),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Spacer(),
+                ElevatedButton(
+                  onPressed: () async {
+                    showCustomPopup(
+                      context,
+                      'Adicionar Repositório',
+                      ['Título', 'Subtitulo'],
+                      onConfirm: (valores) async {
+                        await DatabaseHelper().insertItem(
+                          valores[0],
+                          valores[1],
+                        );
+                        await _loadItems();
+                        await ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Repositório criado')),
+                        );
+                      },
                     );
                   },
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.all(20),
-              ),
-              child: const Text('Adicionar Repositório'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.all(20),
+                  ),
+                  child: const Text('Adicionar Repositório'),
+                ),
+                Spacer(),
+                ElevatedButton(
+                  onPressed: () async {
+                    _openCalendar();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.all(20),
+                  ),
+                  child: const Text('Verificar Pendências'),
+                ),
+                Spacer(),
+              ],
             ),
           ),
           Expanded(

@@ -1,23 +1,21 @@
 import 'package:flutter/material.dart';
 
-Future<void> showCustomPopup(
+Future<bool> showCustomPopup(
   BuildContext context,
   String label,
-  List<String> fieldLabels,
-  void Function(List<String> values) onConfirm,
-) {
+  List<String> fieldLabels, {
+  void Function(List<String> values)? onConfirm,
+}) async {
   final List<TextEditingController> controllers = List.generate(
     fieldLabels.length,
     (_) => TextEditingController(),
   );
 
-  return showDialog(
+  final result = await showDialog<bool>(
     context: context,
     builder: (BuildContext context) {
       return AlertDialog(
-        title: Center(
-          child: Text(label), // Centraliza o título
-        ),
+        title: Center(child: Text(label)),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -34,7 +32,7 @@ Future<void> showCustomPopup(
         ),
         actions: [
           ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(context).pop(false),
             style: ElevatedButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Cancelar'),
           ),
@@ -42,11 +40,12 @@ Future<void> showCustomPopup(
             onPressed: () {
               final values =
                   controllers.map((controller) => controller.text).toList();
-              if (values.isEmpty) {
-                values.add('true');
+
+              if (onConfirm != null) {
+                onConfirm(values);
               }
-              onConfirm(values);
-              Navigator.of(context).pop();
+
+              Navigator.of(context).pop(true);
             },
             child: const Text('Confirmar'),
           ),
@@ -54,4 +53,5 @@ Future<void> showCustomPopup(
       );
     },
   );
+  return result ?? false;
 }

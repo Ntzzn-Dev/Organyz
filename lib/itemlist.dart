@@ -30,18 +30,18 @@ class _ItemExpandState extends State<ItemExpand> {
     switch (widget.estadoAtual) {
       case 0:
         return isDark
-            ? const Color.fromARGB(255, 165, 139, 101) // Tema escuro
-            : const Color.fromARGB(255, 56, 61, 92); // Tema claro
+            ? const Color.fromARGB(255, 165, 139, 101)
+            : const Color.fromARGB(255, 75, 76, 83);
       case 1:
         return isDark
             ? const Color.fromARGB(255, 150, 106, 40)
-            : const Color.fromARGB(255, 30, 29, 114);
+            : const Color.fromARGB(255, 99, 99, 136);
       case 2:
         return isDark
             ? const Color.fromARGB(255, 255, 153, 0)
             : const Color.fromARGB(255, 4, 0, 219);
       default:
-        return const Color.fromARGB(255, 128, 128, 128); // Cinza padrão
+        return const Color.fromARGB(255, 128, 128, 128);
     }
   }
 
