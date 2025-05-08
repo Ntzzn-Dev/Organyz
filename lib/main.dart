@@ -9,7 +9,6 @@ import 'calendario.dart';
 void main() async {
   /*WidgetsFlutterBinding.ensureInitialized();
   await DatabaseHelper().deleteDatabaseFile();*/
-
   runApp(const MyApp());
 }
 

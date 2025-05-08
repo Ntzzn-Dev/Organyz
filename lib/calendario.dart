@@ -65,6 +65,30 @@ class _CalendarPageState extends State<CalendarPage> {
     }
   }
 
+  Color _colorSelected(int atualOrSelected, bool isEvent) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    switch (atualOrSelected) {
+      case 0:
+        return isEvent
+            ? isDark
+                ? const Color.fromARGB(255, 165, 139, 101)
+                : const Color.fromARGB(255, 61, 60, 71)
+            : isDark
+            ? const Color.fromARGB(255, 165, 139, 101)
+            : const Color.fromARGB(255, 119, 118, 141);
+      case 1:
+        return isEvent
+            ? isDark
+                ? const Color.fromARGB(255, 165, 139, 101)
+                : const Color.fromARGB(255, 27, 27, 44)
+            : isDark
+            ? const Color.fromARGB(255, 165, 139, 101)
+            : const Color.fromARGB(255, 41, 41, 56);
+      default:
+        return const Color.fromARGB(255, 128, 128, 128);
+    }
+  }
+
   String _nameState(DateTime dia) {
     switch (_indentState(dia)) {
       case 0:
@@ -81,7 +105,15 @@ class _CalendarPageState extends State<CalendarPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Calendário com Marcação de Dias')),
+      appBar: AppBar(
+        title: const Text('Pendências'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+      ),
       body: Column(
         children: [
           TableCalendar(
@@ -121,9 +153,12 @@ class _CalendarPageState extends State<CalendarPage> {
               _focusedDay.value = focusedDay;
             },
             headerStyle: HeaderStyle(formatButtonVisible: false),
+            daysOfWeekStyle: DaysOfWeekStyle(
+              weekdayStyle: TextStyle(color: Colors.black),
+              weekendStyle: TextStyle(color: Colors.red),
+            ),
             calendarBuilders: CalendarBuilders(
               defaultBuilder: (context, day, focusedDay) {
-                // Verifique se o dia é um dia de evento
                 bool isEventDay = _isEventDay(day);
                 return Container(
                   alignment: Alignment.center,
@@ -139,8 +174,51 @@ class _CalendarPageState extends State<CalendarPage> {
                   ),
                 );
               },
+              selectedBuilder: (context, day, focusedDay) {
+                return Container(
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: _isEventDay(day) ? _colorState(day) : null,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(6.0),
+                    child: Container(
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: _colorSelected(1, _isEventDay(day)),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(
+                        '${day.day}',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                );
+              },
+              todayBuilder: (context, day, focusedDay) {
+                return Container(
+                  alignment: Alignment.center,
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Container(
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: _colorSelected(0, _isEventDay(day)),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(
+                        '${day.day}',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
           ),
+
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
