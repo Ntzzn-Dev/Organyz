@@ -1,6 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class DatabaseHelper {
   static Database? _database;
@@ -39,10 +40,22 @@ class DatabaseHelper {
         ''');
 
         await db.execute('''
-          CREATE TABLE note (
+          CREATE TABLE notes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT,
             desc TEXT,
+            idrepository INTEGER,
+            ordem INTEGER
+          )
+        ''');
+
+        await db.execute('''
+          CREATE TABLE tasks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT,
+            desc TEXT,
+            datafinal TEXT,
+            estado INTEGER,
             idrepository INTEGER,
             ordem INTEGER
           )
@@ -110,7 +123,7 @@ class DatabaseHelper {
   Future<List<Map<String, dynamic>>> getNote(int idRepository) async {
     final db = await database;
     List<Map<String, dynamic>> result = await db.query(
-      'note',
+      'notes',
       where: 'idrepository = ?',
       whereArgs: [idRepository],
     );
@@ -119,7 +132,7 @@ class DatabaseHelper {
 
   Future<void> insertNote(String title, int idRepository, int ordem) async {
     final db = await database;
-    await db.insert('note', {
+    await db.insert('notes', {
       'title': title,
       'idrepository': idRepository,
       'ordem': ordem,
@@ -128,13 +141,67 @@ class DatabaseHelper {
 
   Future<void> removeNote(int id) async {
     final db = await database;
-    await db.delete('note', where: 'id = ?', whereArgs: [id]);
+    await db.delete('notes', where: 'id = ?', whereArgs: [id]);
   }
 
   Future<void> updateNote(int id, String desc) async {
     final db = await database;
 
-    await db.update('note', {'desc': desc}, where: 'id = ?', whereArgs: [id]);
+    await db.update('notes', {'desc': desc}, where: 'id = ?', whereArgs: [id]);
+  }
+
+  //TAREFA
+  Future<List<Map<String, dynamic>>> getTask(int idRepository) async {
+    final db = await database;
+    List<Map<String, dynamic>> result = await db.query(
+      'tasks',
+      where: 'idrepository = ?',
+      whereArgs: [idRepository],
+    );
+
+    for (Map<String, dynamic> task in result) {
+      String datafinalStr = task['datafinal'];
+      DateTime datafinal = DateFormat('dd-MM-yyyy').parse(datafinalStr);
+      String formattedDate = DateFormat('dd-MM-yyyy').format(datafinal);
+      task['datafinal'] = formattedDate;
+    }
+
+    return result;
+  }
+
+  Future<void> insertTask(
+    String title,
+    String desc,
+    DateTime date,
+    int idRepository,
+    int ordem,
+  ) async {
+    final db = await database;
+    String formattedDate = DateFormat('dd/MM/yyyy').format(date);
+    await db.insert('tasks', {
+      'title': title,
+      'desc': desc,
+      'datafinal': formattedDate,
+      'estado': 0,
+      'idrepository': idRepository,
+      'ordem': ordem,
+    });
+  }
+
+  Future<void> removeTask(int id) async {
+    final db = await database;
+    await db.delete('tasks', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<void> updateTask(int id, int state) async {
+    final db = await database;
+
+    await db.update(
+      'tasks',
+      {'estado': state},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 
   //REPOSITORIO ITENS
@@ -155,7 +222,7 @@ class DatabaseHelper {
         }).toList();
 
     List<Map<String, dynamic>> notes = await db.query(
-      'note',
+      'notes',
       where: 'idrepository = ?',
       whereArgs: [idRepository],
     );
@@ -171,7 +238,25 @@ class DatabaseHelper {
             )
             .toList();
 
-    List<Map<String, dynamic>> all = [...links, ...notes];
+    List<Map<String, dynamic>> tasks = await db.query(
+      'tasks',
+      where: 'idrepository = ?',
+      whereArgs: [idRepository],
+    );
+
+    tasks =
+        tasks.map((item) {
+          return {...item, 'type': 'task'};
+        }).toList();
+
+    for (Map<String, dynamic> task in tasks) {
+      String datafinalStr = task['datafinal'];
+      DateTime datafinal = DateFormat('dd/MM/yyyy').parse(datafinalStr);
+      String formattedDate = DateFormat('dd/MM/yyyy').format(datafinal);
+      task['datafinal'] = formattedDate;
+    }
+
+    List<Map<String, dynamic>> all = [...links, ...notes, ...tasks];
 
     all.sort((a, b) => (a['ordem'] as int).compareTo(b['ordem'] as int));
 

@@ -17,10 +17,10 @@ final ThemeData lighttheme = ThemeData(
   dialogTheme: DialogTheme(backgroundColor: Color.fromARGB(255, 242, 242, 242)),
 
   inputDecorationTheme: InputDecorationTheme(
-    labelStyle: TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
+    labelStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
     floatingLabelStyle: TextStyle(
       color: Color.fromARGB(255, 11, 3, 80),
-      fontSize: 24,
+      fontSize: 18,
       fontWeight: FontWeight.w900,
     ),
     hintStyle: TextStyle(color: Colors.grey),

@@ -4,7 +4,8 @@ class ItemExpand extends StatefulWidget {
   final String title;
   final int id;
   final String subtitle;
-  final VoidCallback onPressedX;
+  final int? estadoAtual;
+  final VoidCallback? onPressedX;
   final VoidCallback? onPressedOpen;
   final VoidCallback? onPressedCard;
 
@@ -13,7 +14,8 @@ class ItemExpand extends StatefulWidget {
     required this.title,
     required this.id,
     required this.subtitle,
-    required this.onPressedX,
+    this.estadoAtual,
+    this.onPressedX,
     this.onPressedOpen,
     this.onPressedCard,
   });
@@ -23,6 +25,39 @@ class ItemExpand extends StatefulWidget {
 }
 
 class _ItemExpandState extends State<ItemExpand> {
+  Color get corState {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    switch (widget.estadoAtual) {
+      case 0:
+        return isDark
+            ? const Color.fromARGB(255, 165, 139, 101) // Tema escuro
+            : const Color.fromARGB(255, 56, 61, 92); // Tema claro
+      case 1:
+        return isDark
+            ? const Color.fromARGB(255, 150, 106, 40)
+            : const Color.fromARGB(255, 30, 29, 114);
+      case 2:
+        return isDark
+            ? const Color.fromARGB(255, 255, 153, 0)
+            : const Color.fromARGB(255, 4, 0, 219);
+      default:
+        return const Color.fromARGB(255, 128, 128, 128); // Cinza padrão
+    }
+  }
+
+  String get nomeState {
+    switch (widget.estadoAtual) {
+      case 0:
+        return 'iniciado';
+      case 1:
+        return 'em andamento';
+      case 2:
+        return 'concluida';
+      default:
+        return 'error';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return InkWell(
@@ -70,10 +105,17 @@ class _ItemExpandState extends State<ItemExpand> {
                   widget.onPressedOpen == null
                       ? const SizedBox.shrink()
                       : ElevatedButton(
-                        onPressed: widget.onPressedOpen, // Ação opcional
-                        child: const Text('▼'),
+                        onPressed: widget.onPressedOpen,
                         style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.all(1),
+                          padding: const EdgeInsets.all(4),
+                          fixedSize: Size(120, 48),
+                          backgroundColor: corState,
+                        ),
+                        child: Text(
+                          nomeState,
+                          style: TextStyle(
+                            color: Color.fromARGB(255, 242, 242, 242),
+                          ),
                         ),
                       ),
                   const SizedBox(width: 4),

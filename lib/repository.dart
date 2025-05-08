@@ -4,6 +4,7 @@ import 'database_helper.dart';
 import 'popup.dart';
 import 'textarealist.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:intl/intl.dart';
 
 class NovaPagina extends StatefulWidget {
   final String titulo;
@@ -60,12 +61,11 @@ class _repositoryPageState extends State<NovaPagina> {
                     showCustomPopup(
                       context,
                       'Adicionar Link',
-                      'Título',
-                      'Link',
-                      (title, subtitle) async {
+                      ['Título', 'Link'],
+                      (valores) async {
                         await DatabaseHelper().insertLink(
-                          title,
-                          subtitle,
+                          valores[0],
+                          valores[1],
                           widget.id,
                           ultimaOrdem,
                         );
@@ -79,17 +79,16 @@ class _repositoryPageState extends State<NovaPagina> {
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.all(20),
                   ),
-                  child: const Text('Adicionar Link'),
+                  child: const Text('+ Link'),
                 ),
                 Spacer(),
                 ElevatedButton(
                   onPressed: () async {
-                    showCustomPopup(context, 'Adicionar Nota', 'Título', '', (
-                      title,
-                      subtitle,
+                    showCustomPopup(context, 'Adicionar Nota', ['Título'], (
+                      valores,
                     ) async {
                       await DatabaseHelper().insertNote(
-                        title,
+                        valores[0],
                         widget.id,
                         ultimaOrdem,
                       );
@@ -102,7 +101,37 @@ class _repositoryPageState extends State<NovaPagina> {
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.all(20),
                   ),
-                  child: const Text('Adicionar Nota'),
+                  child: const Text('+ Nota'),
+                ),
+                Spacer(),
+                ElevatedButton(
+                  onPressed: () async {
+                    showCustomPopup(
+                      context,
+                      'Adicionar Tarefa',
+                      ['Título', 'Descrição', 'Data Final'],
+                      (valores) async {
+                        DateTime date = DateFormat(
+                          'dd/MM/yyyy',
+                        ).parse(valores[2]);
+                        await DatabaseHelper().insertTask(
+                          valores[0],
+                          valores[1],
+                          date,
+                          widget.id,
+                          ultimaOrdem,
+                        );
+                        await _loadItems();
+                        await ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Tarefa Adicionada')),
+                        );
+                      },
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.all(20),
+                  ),
+                  child: const Text('+ Tarefa'),
                 ),
                 Spacer(),
               ],
@@ -154,6 +183,45 @@ class _repositoryPageState extends State<NovaPagina> {
                     onTextChanged: (text) {
                       setState(() {
                         DatabaseHelper().updateNote(item['id'], text);
+                      });
+                    },
+                  );
+                } else if (item['type'] == 'task') {
+                  return ItemExpand(
+                    title: item['title'],
+                    id: index,
+                    subtitle: item['datafinal'],
+                    estadoAtual: item['estado'],
+                    onPressedX: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Item deletado: ${item['title']}'),
+                        ),
+                      );
+                      setState(() {
+                        DatabaseHelper().removeTask(item['id']);
+                        _loadItems();
+                      });
+                    },
+                    onPressedOpen: () async {
+                      setState(() {
+                        int state = item['estado'];
+
+                        state = state + 1;
+                        if (state >= 3) {
+                          state = 0;
+                          showCustomPopup(context, 'Reiniciar estado?', [], (
+                            valores,
+                          ) async {
+                            if (valores[0] == 'true') {
+                              DatabaseHelper().updateTask(item['id'], state);
+                              _loadItems();
+                            }
+                          });
+                        } else {
+                          DatabaseHelper().updateTask(item['id'], state);
+                          _loadItems();
+                        }
                       });
                     },
                   );

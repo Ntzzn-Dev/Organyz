@@ -71,10 +71,9 @@ class _HomePageState extends State<HomePage> {
                 showCustomPopup(
                   context,
                   'Adicionar Repositório',
-                  'Título',
-                  'Subtitulo',
-                  (title, subtitle) async {
-                    await DatabaseHelper().insertItem(title, subtitle);
+                  ['Título', 'Subtitulo'],
+                  (valores) async {
+                    await DatabaseHelper().insertItem(valores[0], valores[1]);
                     await _loadItems();
                     await ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Repositório criado')),
