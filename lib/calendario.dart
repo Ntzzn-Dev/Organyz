@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:organyz/database_helper.dart';
+import 'package:organyz/itemlist.dart';
+import 'package:organyz/popup.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 import 'dart:developer';
@@ -11,11 +14,12 @@ class CalendarPage extends StatefulWidget {
 class _CalendarPageState extends State<CalendarPage> {
   late final ValueNotifier<DateTime> _focusedDay;
   late final ValueNotifier<DateTime> _selectedDay;
-  String titulo = '';
+  List<Map<String, dynamic>> events = [];
 
   @override
   void initState() {
     super.initState();
+    _loadItems();
     _focusedDay = ValueNotifier(DateTime.now());
     _selectedDay = ValueNotifier(DateTime.now());
   }
@@ -27,7 +31,21 @@ class _CalendarPageState extends State<CalendarPage> {
     super.dispose();
   }
 
-  int _indentState(DateTime dia) {
+  Future<void> _loadItems() async {
+    events = await DatabaseHelper().getTasks();
+    setState(() {});
+  }
+
+  bool _isEventDay(DateTime day) {
+    return events.any((event) {
+      DateTime datafinal = DateFormat('dd/MM/yyyy').parse(event['datafinal']);
+      return datafinal.year == day.year &&
+          datafinal.month == day.month &&
+          datafinal.day == day.day;
+    });
+  }
+
+  List<int> _indentState(DateTime dia) {
     final eventoDoDia =
         events.where((evento) {
           DateTime datafinal = DateFormat(
@@ -39,15 +57,17 @@ class _CalendarPageState extends State<CalendarPage> {
         }).toList();
 
     if (eventoDoDia.isNotEmpty) {
-      return eventoDoDia[0]['estado'];
+      return eventoDoDia.map<int>((e) => e['estado'] as int).toList();
     } else {
-      return -1;
+      return [-1];
     }
   }
 
   Color _colorState(DateTime dia) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    switch (_indentState(dia)) {
+    int diaMenosAvancado = _indentState(dia).reduce((a, b) => a < b ? a : b);
+
+    switch (diaMenosAvancado) {
       case 0:
         return isDark
             ? const Color.fromARGB(255, 165, 139, 101)
@@ -75,7 +95,7 @@ class _CalendarPageState extends State<CalendarPage> {
                 : const Color.fromARGB(255, 61, 60, 71)
             : isDark
             ? const Color.fromARGB(255, 165, 139, 101)
-            : const Color.fromARGB(255, 119, 118, 141);
+            : const Color.fromARGB(255, 191, 191, 211);
       case 1:
         return isEvent
             ? isDark
@@ -89,18 +109,7 @@ class _CalendarPageState extends State<CalendarPage> {
     }
   }
 
-  String _nameState(DateTime dia) {
-    switch (_indentState(dia)) {
-      case 0:
-        return 'iniciado';
-      case 1:
-        return 'em andamento';
-      case 2:
-        return 'concluida';
-      default:
-        return '';
-    }
-  }
+  List<Map<String, dynamic>> eventsActual = [];
 
   @override
   Widget build(BuildContext context) {
@@ -117,6 +126,7 @@ class _CalendarPageState extends State<CalendarPage> {
       body: Column(
         children: [
           TableCalendar(
+            locale: 'pt_BR',
             firstDay: DateTime.utc(2020, 1, 1),
             lastDay: DateTime.utc(2030, 12, 31),
             focusedDay: _focusedDay.value,
@@ -143,19 +153,37 @@ class _CalendarPageState extends State<CalendarPage> {
                     }).toList();
 
                 if (eventoDoDia.isNotEmpty) {
-                  titulo = eventoDoDia[0]['title'];
+                  eventsActual = eventoDoDia;
                 } else {
-                  titulo = '';
+                  eventsActual = [];
                 }
               });
             },
             onPageChanged: (focusedDay) {
               _focusedDay.value = focusedDay;
             },
-            headerStyle: HeaderStyle(formatButtonVisible: false),
+            headerStyle: HeaderStyle(
+              titleCentered: true,
+              formatButtonVisible: false,
+              titleTextStyle: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Color.fromARGB(255, 86, 86, 141),
+                fontStyle: FontStyle.italic,
+              ),
+              titleTextFormatter:
+                  (date, locale) =>
+                      DateFormat('MMMM yyyy', locale).format(date),
+            ),
             daysOfWeekStyle: DaysOfWeekStyle(
+              dowTextFormatter:
+                  (date, locale) =>
+                      DateFormat.E(
+                        locale,
+                      ).format(date).substring(0, 1).toUpperCase(),
               weekdayStyle: TextStyle(color: Colors.black),
-              weekendStyle: TextStyle(color: Colors.red),
+              weekendStyle: TextStyle(
+                color: const Color.fromARGB(255, 99, 99, 136),
+              ),
             ),
             calendarBuilders: CalendarBuilders(
               defaultBuilder: (context, day, focusedDay) {
@@ -219,51 +247,46 @@ class _CalendarPageState extends State<CalendarPage> {
             ),
           ),
 
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                Text(
-                  'Data selecionada: ${DateFormat('dd/MM/yyyy').format(_selectedDay.value.toLocal())}',
-                  style: TextStyle(fontSize: 18),
-                ),
-                const SizedBox(height: 50),
-                Text(titulo, style: TextStyle(fontSize: 18)),
-                const SizedBox(height: 50),
-                Text(
-                  _nameState(_selectedDay.value.toLocal()),
-                  style: TextStyle(fontSize: 18),
-                ),
-              ],
+          Expanded(
+            child: ListView.builder(
+              itemCount: eventsActual.length,
+              itemBuilder: (context, index) {
+                return ItemExpand(
+                  id: index,
+                  title: eventsActual[index]['title'],
+                  subtitle: eventsActual[index]['datafinal'],
+                  desc: eventsActual[index]['desc'],
+                  estadoAtual: eventsActual[index]['estado'],
+                  onPressedOpen: () async {
+                    int state = eventsActual[index]['estado'];
+                    state++;
+
+                    if (state >= 3) {
+                      state = 0;
+
+                      bool aceito = await showCustomPopup(
+                        context,
+                        'Reiniciar estado?',
+                        [],
+                      );
+                      if (!aceito) {
+                        return;
+                      }
+                    }
+                    await DatabaseHelper().updateTask(
+                      eventsActual[index]['id'],
+                      state,
+                    );
+                    eventsActual[index]['estado'] = state;
+                    _loadItems();
+                  },
+                  expandItem: 1,
+                );
+              },
             ),
           ),
         ],
       ),
     );
-  }
-
-  List<Map<String, dynamic>> events = [
-    {
-      'datafinal': '10/5/2025',
-      'title': 'aniversario',
-      'estado': 2,
-      'desc': 'NSEI',
-    },
-    {'datafinal': '15/5/2025', 'title': 'prova', 'estado': 1, 'desc': 'NSEI'},
-    {
-      'datafinal': '20/6/2025',
-      'title': 'tarefinha',
-      'estado': 0,
-      'desc': 'NSEI',
-    },
-  ];
-
-  bool _isEventDay(DateTime day) {
-    return events.any((event) {
-      DateTime datafinal = DateFormat('dd/MM/yyyy').parse(event['datafinal']);
-      return datafinal.year == day.year &&
-          datafinal.month == day.month &&
-          datafinal.day == day.day;
-    });
   }
 }

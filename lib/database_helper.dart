@@ -151,18 +151,19 @@ class DatabaseHelper {
   }
 
   //TAREFA
-  Future<List<Map<String, dynamic>>> getTask(int idRepository) async {
+  Future<List<Map<String, dynamic>>> getTasks() async {
     final db = await database;
-    List<Map<String, dynamic>> result = await db.query(
-      'tasks',
-      where: 'idrepository = ?',
-      whereArgs: [idRepository],
-    );
+    List<Map<String, dynamic>> result = await db.query('tasks');
+
+    result =
+        result.map((item) {
+          return {...item};
+        }).toList();
 
     for (Map<String, dynamic> task in result) {
       String datafinalStr = task['datafinal'];
-      DateTime datafinal = DateFormat('dd-MM-yyyy').parse(datafinalStr);
-      String formattedDate = DateFormat('dd-MM-yyyy').format(datafinal);
+      DateTime datafinal = DateFormat('dd/MM/yyyy').parse(datafinalStr);
+      String formattedDate = DateFormat('dd/MM/yyyy').format(datafinal);
       task['datafinal'] = formattedDate;
     }
 

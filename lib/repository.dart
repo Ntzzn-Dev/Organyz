@@ -191,10 +191,12 @@ class _repositoryPageState extends State<NovaPagina> {
                   );
                 } else if (item['type'] == 'task') {
                   return ItemExpand(
-                    title: item['title'],
                     id: index,
+                    title: item['title'],
                     subtitle: item['datafinal'],
+                    desc: item['desc'],
                     estadoAtual: item['estado'],
+                    expandItem: 1,
                     onPressedX: () {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(

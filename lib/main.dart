@@ -5,10 +5,11 @@ import 'popup.dart';
 import 'repository.dart';
 import 'themes.dart';
 import 'calendario.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() async {
-  /*WidgetsFlutterBinding.ensureInitialized();
-  await DatabaseHelper().deleteDatabaseFile();*/
+  WidgetsFlutterBinding.ensureInitialized();
+  //await DatabaseHelper().deleteDatabaseFile();
   runApp(const MyApp());
 }
 
@@ -18,6 +19,13 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      localizationsDelegates: [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [Locale('pt', 'BR')],
+      locale: const Locale('pt', 'BR'),
       debugShowCheckedModeBanner: false,
       title: 'Lista de Itens',
       theme: lighttheme,
@@ -98,7 +106,7 @@ class _HomePageState extends State<HomePage> {
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.all(20),
                   ),
-                  child: const Text('Adicionar Repositório'),
+                  child: const Text('Add Repositório'),
                 ),
                 Spacer(),
                 ElevatedButton(
@@ -108,7 +116,7 @@ class _HomePageState extends State<HomePage> {
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.all(20),
                   ),
-                  child: const Text('Verificar Pendências'),
+                  child: const Text('Pendências'),
                 ),
                 Spacer(),
               ],

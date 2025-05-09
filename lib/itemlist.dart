@@ -1,23 +1,27 @@
 import 'package:flutter/material.dart';
 
 class ItemExpand extends StatefulWidget {
-  final String title;
   final int id;
+  final String title;
   final String subtitle;
+  final String? desc;
   final int? estadoAtual;
   final VoidCallback? onPressedX;
   final VoidCallback? onPressedOpen;
   final VoidCallback? onPressedCard;
+  final int? expandItem;
 
   const ItemExpand({
     super.key,
-    required this.title,
     required this.id,
+    required this.title,
     required this.subtitle,
+    this.desc,
     this.estadoAtual,
     this.onPressedX,
     this.onPressedOpen,
     this.onPressedCard,
+    this.expandItem,
   });
 
   @override
@@ -25,6 +29,12 @@ class ItemExpand extends StatefulWidget {
 }
 
 class _ItemExpandState extends State<ItemExpand> {
+  ValueNotifier<bool> isExpandedNotifier = ValueNotifier<bool>(false);
+
+  void _toggleValue() {
+    isExpandedNotifier.value = !isExpandedNotifier.value;
+  }
+
   Color get corState {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     switch (widget.estadoAtual) {
@@ -61,16 +71,17 @@ class _ItemExpandState extends State<ItemExpand> {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: widget.onPressedCard,
+      onTap: widget.expandItem == 1 ? _toggleValue : widget.onPressedCard,
       child: Card(
         margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         elevation: 4,
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           child: Column(
             children: [
               Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Expanded(
                     child: Column(
@@ -97,7 +108,6 @@ class _ItemExpandState extends State<ItemExpand> {
                           overflow: TextOverflow.ellipsis,
                           maxLines: 3,
                         ),
-                        const SizedBox(height: 12),
                       ],
                     ),
                   ),
@@ -105,7 +115,10 @@ class _ItemExpandState extends State<ItemExpand> {
                   widget.onPressedOpen == null
                       ? const SizedBox.shrink()
                       : ElevatedButton(
-                        onPressed: widget.onPressedOpen,
+                        onPressed:
+                            widget.expandItem == 2
+                                ? _toggleValue
+                                : widget.onPressedOpen,
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.all(4),
                           fixedSize: Size(120, 48),
@@ -119,14 +132,48 @@ class _ItemExpandState extends State<ItemExpand> {
                         ),
                       ),
                   const SizedBox(width: 4),
-                  ElevatedButton(
-                    onPressed: widget.onPressedX,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.all(1),
-                    ),
-                    child: const Text('X'),
-                  ),
+                  widget.onPressedX == null
+                      ? const SizedBox.shrink()
+                      : ElevatedButton(
+                        onPressed:
+                            widget.expandItem == 2
+                                ? _toggleValue
+                                : widget.onPressedX,
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.all(1),
+                        ),
+                        child: const Text('X'),
+                      ),
                 ],
+              ),
+              ValueListenableBuilder<bool>(
+                valueListenable: isExpandedNotifier,
+                builder: (context, isExpanded, child) {
+                  return AnimatedSize(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                    alignment: Alignment.topRight,
+                    child:
+                        isExpanded && widget.desc != null
+                            ? Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 0.0,
+                                vertical: 10.0,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    widget.desc!,
+                                    textAlign: TextAlign.start,
+                                  ),
+                                ],
+                              ),
+                            )
+                            : const SizedBox.shrink(),
+                  );
+                },
               ),
             ],
           ),

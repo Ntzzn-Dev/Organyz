@@ -12,7 +12,7 @@ class TextAreaList extends StatelessWidget {
     super.key,
     required this.controller,
     this.label = 'Digite algo...',
-    this.minLines = 3,
+    this.minLines = 2,
     this.maxLines = 5,
     this.onPressedX,
     required this.onTextChanged,
