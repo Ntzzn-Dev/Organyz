@@ -4,11 +4,17 @@ Future<bool> showCustomPopup(
   BuildContext context,
   String label,
   List<String> fieldLabels, {
+  List<String>? fieldValues,
   void Function(List<String> values)? onConfirm,
 }) async {
   final List<TextEditingController> controllers = List.generate(
     fieldLabels.length,
-    (_) => TextEditingController(),
+    (index) => TextEditingController(
+      text:
+          fieldValues != null && index < fieldValues.length
+              ? fieldValues[index]
+              : '',
+    ),
   );
 
   final result = await showDialog<bool>(

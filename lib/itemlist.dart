@@ -6,7 +6,8 @@ class ItemExpand extends StatefulWidget {
   final String subtitle;
   final String? desc;
   final int? estadoAtual;
-  final VoidCallback? onPressedX;
+  final VoidCallback? onPressedDel;
+  final VoidCallback? onPressedEdit;
   final VoidCallback? onPressedOpen;
   final VoidCallback? onPressedCard;
   final int? expandItem;
@@ -18,7 +19,8 @@ class ItemExpand extends StatefulWidget {
     required this.subtitle,
     this.desc,
     this.estadoAtual,
-    this.onPressedX,
+    this.onPressedDel,
+    this.onPressedEdit,
     this.onPressedOpen,
     this.onPressedCard,
     this.expandItem,
@@ -68,6 +70,49 @@ class _ItemExpandState extends State<ItemExpand> {
     }
   }
 
+  ElevatedButton acceptButton() {
+    final bool temEstado = widget.estadoAtual != null;
+
+    return ElevatedButton(
+      onPressed: widget.expandItem == 2 ? _toggleValue : widget.onPressedOpen,
+      style: ElevatedButton.styleFrom(
+        padding: const EdgeInsets.all(4),
+        fixedSize: temEstado ? const Size(120, 48) : null,
+        backgroundColor: temEstado ? corState : null,
+      ),
+      child: Text(
+        temEstado ? nomeState : '▼',
+        style: TextStyle(
+          color: temEstado ? Color.fromARGB(255, 242, 242, 242) : null,
+        ),
+      ),
+    );
+  }
+
+  ElevatedButton deleteButton() {
+    return ElevatedButton(
+      onPressed: widget.onPressedDel,
+      style: ElevatedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      ),
+      child: Icon(Icons.delete),
+    );
+  }
+
+  ElevatedButton editButton() {
+    return ElevatedButton(
+      onPressed: widget.onPressedEdit,
+      style: ElevatedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      ),
+      child: Icon(Icons.edit),
+    );
+  }
+
+  Text textDesc() {
+    return Text(widget.desc!, textAlign: TextAlign.start);
+  }
+
   @override
   Widget build(BuildContext context) {
     return InkWell(
@@ -114,36 +159,11 @@ class _ItemExpandState extends State<ItemExpand> {
                   const SizedBox(width: 8),
                   widget.onPressedOpen == null
                       ? const SizedBox.shrink()
-                      : ElevatedButton(
-                        onPressed:
-                            widget.expandItem == 2
-                                ? _toggleValue
-                                : widget.onPressedOpen,
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.all(4),
-                          fixedSize: Size(120, 48),
-                          backgroundColor: corState,
-                        ),
-                        child: Text(
-                          nomeState,
-                          style: TextStyle(
-                            color: Color.fromARGB(255, 242, 242, 242),
-                          ),
-                        ),
-                      ),
+                      : acceptButton(),
                   const SizedBox(width: 4),
-                  widget.onPressedX == null
+                  widget.onPressedDel == null || widget.expandItem == 1
                       ? const SizedBox.shrink()
-                      : ElevatedButton(
-                        onPressed:
-                            widget.expandItem == 2
-                                ? _toggleValue
-                                : widget.onPressedX,
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.all(1),
-                        ),
-                        child: const Text('X'),
-                      ),
+                      : deleteButton(),
                 ],
               ),
               ValueListenableBuilder<bool>(
@@ -154,7 +174,8 @@ class _ItemExpandState extends State<ItemExpand> {
                     curve: Curves.easeInOut,
                     alignment: Alignment.topRight,
                     child:
-                        isExpanded && widget.desc != null
+                        isExpanded &&
+                                (widget.desc != null || widget.expandItem == 1)
                             ? Container(
                               width: double.infinity,
                               padding: const EdgeInsets.symmetric(
@@ -164,9 +185,18 @@ class _ItemExpandState extends State<ItemExpand> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    widget.desc!,
-                                    textAlign: TextAlign.start,
+                                  widget.desc != null
+                                      ? textDesc()
+                                      : const SizedBox.shrink(),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      editButton(),
+                                      const SizedBox(width: 4),
+                                      widget.expandItem == 1
+                                          ? deleteButton()
+                                          : const SizedBox.shrink(),
+                                    ],
                                   ),
                                 ],
                               ),

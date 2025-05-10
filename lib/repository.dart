@@ -151,7 +151,16 @@ class _repositoryPageState extends State<NovaPagina> {
                     title: item['title'],
                     id: index,
                     subtitle: item['url'],
-                    onPressedX: () {
+                    expandItem: 1,
+                    onPressedDel: () async {
+                      bool aceito = await showCustomPopup(
+                        context,
+                        'Deletar link?',
+                        [],
+                      );
+                      if (!aceito) {
+                        return;
+                      }
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text('Item deletado: ${item['title']}'),
@@ -167,12 +176,40 @@ class _repositoryPageState extends State<NovaPagina> {
 
                       launchUrl(url, mode: LaunchMode.externalApplication);
                     },
+                    onPressedEdit: () async {
+                      showCustomPopup(
+                        context,
+                        'Adicionar Link',
+                        ['Título', 'Link'],
+                        fieldValues: [item['title'], item['url']],
+                        onConfirm: (valores) async {
+                          await DatabaseHelper().updateLink(
+                            item['id'],
+                            valores[0],
+                            valores[1],
+                            item['ordem'],
+                          );
+                          await _loadItems();
+                          await ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Link Atualizado')),
+                          );
+                        },
+                      );
+                    },
                   );
-                } else if (item['type'] == 'text') {
+                } else if (item['type'] == 'note') {
                   return TextAreaList(
                     label: item['title'],
                     controller: item['controller'],
-                    onPressedX: () {
+                    onPressedDel: () async {
+                      bool aceito = await showCustomPopup(
+                        context,
+                        'Deletar nota?',
+                        [],
+                      );
+                      if (!aceito) {
+                        return;
+                      }
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text('Item deletado: ${item['title']}'),
@@ -185,8 +222,27 @@ class _repositoryPageState extends State<NovaPagina> {
                     },
                     onTextChanged: (text) {
                       setState(() {
-                        DatabaseHelper().updateNote(item['id'], text);
+                        DatabaseHelper().saveNote(item['id'], text);
                       });
+                    },
+                    onPressedEdit: () async {
+                      showCustomPopup(
+                        context,
+                        'Adicionar Nota',
+                        ['Título'],
+                        fieldValues: [item['title']],
+                        onConfirm: (valores) async {
+                          await DatabaseHelper().updateNote(
+                            item['id'],
+                            valores[0],
+                            item['ordem'],
+                          );
+                          await _loadItems();
+                          await ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Nota Atualizada')),
+                          );
+                        },
+                      );
                     },
                   );
                 } else if (item['type'] == 'task') {
@@ -197,7 +253,15 @@ class _repositoryPageState extends State<NovaPagina> {
                     desc: item['desc'],
                     estadoAtual: item['estado'],
                     expandItem: 1,
-                    onPressedX: () {
+                    onPressedDel: () async {
+                      bool aceito = await showCustomPopup(
+                        context,
+                        'Deletar tarefa?',
+                        [],
+                      );
+                      if (!aceito) {
+                        return;
+                      }
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text('Item deletado: ${item['title']}'),
@@ -224,8 +288,36 @@ class _repositoryPageState extends State<NovaPagina> {
                           return;
                         }
                       }
-                      await DatabaseHelper().updateTask(item['id'], state);
+                      await DatabaseHelper().saveTask(item['id'], state);
                       _loadItems();
+                    },
+                    onPressedEdit: () async {
+                      showCustomPopup(
+                        context,
+                        'Adicionar Tarefa',
+                        ['Título', 'Descrição', 'Data Final'],
+                        fieldValues: [
+                          item['title'],
+                          item['desc'],
+                          item['datafinal'],
+                        ],
+                        onConfirm: (valores) async {
+                          DateTime date = DateFormat(
+                            'dd/MM/yyyy',
+                          ).parse(valores[2]);
+                          await DatabaseHelper().updateTask(
+                            item['id'],
+                            valores[0],
+                            valores[1],
+                            date,
+                            item['ordem'],
+                          );
+                          await _loadItems();
+                          await ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Tarefa Atualizada')),
+                          );
+                        },
+                      );
                     },
                   );
                 } else {

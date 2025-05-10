@@ -71,7 +71,7 @@ class DatabaseHelper {
     print('Banco de dados deletado com sucesso.');
   }
 
-  //ITEMS
+  //REPOSITORYS ===============================================================
   Future<List<Map<String, dynamic>>> getItems() async {
     final db = await database;
     List<Map<String, dynamic>> result = await db.query('repository');
@@ -88,7 +88,18 @@ class DatabaseHelper {
     await db.delete('repository', where: 'id = ?', whereArgs: [id]);
   }
 
-  //LINKS
+  Future<void> updateItem(int id, String title, String subtitle) async {
+    final db = await database;
+
+    await db.update(
+      'repository',
+      {'title': title, 'subtitle': subtitle},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  //LINKS =====================================================================
   Future<List<Map<String, dynamic>>> getLinks(int idRepository) async {
     final db = await database;
     List<Map<String, dynamic>> result = await db.query(
@@ -119,7 +130,18 @@ class DatabaseHelper {
     await db.delete('links', where: 'id = ?', whereArgs: [id]);
   }
 
-  //TEXTAREA
+  Future<void> updateLink(int id, String title, String url, int ordem) async {
+    final db = await database;
+
+    await db.update(
+      'links',
+      {'title': title, 'url': url, 'ordem': ordem},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  //NOTES =====================================================================
   Future<List<Map<String, dynamic>>> getNote(int idRepository) async {
     final db = await database;
     List<Map<String, dynamic>> result = await db.query(
@@ -144,13 +166,24 @@ class DatabaseHelper {
     await db.delete('notes', where: 'id = ?', whereArgs: [id]);
   }
 
-  Future<void> updateNote(int id, String desc) async {
+  Future<void> saveNote(int id, String desc) async {
     final db = await database;
 
     await db.update('notes', {'desc': desc}, where: 'id = ?', whereArgs: [id]);
   }
 
-  //TAREFA
+  Future<void> updateNote(int id, String title, int ordem) async {
+    final db = await database;
+
+    await db.update(
+      'notes',
+      {'title': title, 'ordem': ordem},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  //TASKS =====================================================================
   Future<List<Map<String, dynamic>>> getTasks() async {
     final db = await database;
     List<Map<String, dynamic>> result = await db.query('tasks');
@@ -178,6 +211,7 @@ class DatabaseHelper {
     int ordem,
   ) async {
     final db = await database;
+
     String formattedDate = DateFormat('dd/MM/yyyy').format(date);
     await db.insert('tasks', {
       'title': title,
@@ -194,7 +228,7 @@ class DatabaseHelper {
     await db.delete('tasks', where: 'id = ?', whereArgs: [id]);
   }
 
-  Future<void> updateTask(int id, int state) async {
+  Future<void> saveTask(int id, int state) async {
     final db = await database;
 
     await db.update(
@@ -205,7 +239,30 @@ class DatabaseHelper {
     );
   }
 
-  //REPOSITORIO ITENS
+  Future<void> updateTask(
+    int id,
+    String title,
+    String desc,
+    DateTime date,
+    int ordem,
+  ) async {
+    final db = await database;
+
+    String formattedDate = DateFormat('dd/MM/yyyy').format(date);
+    await db.update(
+      'tasks',
+      {
+        'title': title,
+        'desc': desc,
+        'datafinal': formattedDate,
+        'ordem': ordem,
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  //REPOSITORIO ITENS =========================================================
   Future<List<Map<String, dynamic>>> getAllItemsOrdered(
     int idRepository,
   ) async {
@@ -233,7 +290,7 @@ class DatabaseHelper {
             .map(
               (item) => {
                 ...item,
-                'type': 'text',
+                'type': 'note',
                 'controller': TextEditingController(text: item['desc'] ?? ''),
               },
             )

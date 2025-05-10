@@ -130,7 +130,15 @@ class _HomePageState extends State<HomePage> {
                   title: items[index]['title'],
                   id: index,
                   subtitle: items[index]['subtitle'],
-                  onPressedX: () {
+                  onPressedDel: () async {
+                    bool aceito = await showCustomPopup(
+                      context,
+                      'Deletar repositório?',
+                      [],
+                    );
+                    if (!aceito) {
+                      return;
+                    }
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(

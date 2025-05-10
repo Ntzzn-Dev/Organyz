@@ -4,7 +4,6 @@ import 'package:organyz/itemlist.dart';
 import 'package:organyz/popup.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
-import 'dart:developer';
 
 class CalendarPage extends StatefulWidget {
   @override
@@ -273,7 +272,7 @@ class _CalendarPageState extends State<CalendarPage> {
                         return;
                       }
                     }
-                    await DatabaseHelper().updateTask(
+                    await DatabaseHelper().saveTask(
                       eventsActual[index]['id'],
                       state,
                     );

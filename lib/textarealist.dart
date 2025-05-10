@@ -5,7 +5,8 @@ class TextAreaList extends StatelessWidget {
   final String label;
   final int minLines;
   final int maxLines;
-  final VoidCallback? onPressedX;
+  final VoidCallback? onPressedDel;
+  final VoidCallback? onPressedEdit;
   final ValueChanged<String> onTextChanged;
 
   const TextAreaList({
@@ -14,7 +15,8 @@ class TextAreaList extends StatelessWidget {
     this.label = 'Digite algo...',
     this.minLines = 2,
     this.maxLines = 5,
-    this.onPressedX,
+    this.onPressedDel,
+    this.onPressedEdit,
     required this.onTextChanged,
   });
 
@@ -55,8 +57,20 @@ class TextAreaList extends StatelessWidget {
               shape: const CircleBorder(),
               padding: const EdgeInsets.all(10),
             ),
-            onPressed: onPressedX,
+            onPressed: onPressedDel,
             child: const Icon(Icons.close, size: 20),
+          ),
+        ),
+        Positioned(
+          top: 8,
+          right: 52,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              shape: const CircleBorder(),
+              padding: const EdgeInsets.all(10),
+            ),
+            onPressed: onPressedEdit,
+            child: const Icon(Icons.edit, size: 20),
           ),
         ),
       ],
