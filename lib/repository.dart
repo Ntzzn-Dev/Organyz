@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'itemlist.dart';
 import 'database_helper.dart';
@@ -20,11 +22,14 @@ class NovaPagina extends StatefulWidget {
 class _repositoryPageState extends State<NovaPagina> {
   List<Map<String, dynamic>> links = [];
   int ultimaOrdem = 0;
+  late TextEditingController _controller;
+  final String mask = "00/00/0000";
 
   @override
   void initState() {
     super.initState();
     _loadItems();
+    _controller = TextEditingController(text: '00/00/0000');
   }
 
   Future<void> _loadItems() async {
