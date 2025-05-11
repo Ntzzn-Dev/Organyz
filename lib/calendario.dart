@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:organyz/database_helper.dart';
 import 'package:organyz/itemlist.dart';
 import 'package:organyz/popup.dart';
+import 'package:organyz/themes.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 
@@ -63,46 +64,30 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   Color _colorState(DateTime dia) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final customColors = Theme.of(context).extension<CustomColors>()!;
     int diaMenosAvancado = _indentState(dia).reduce((a, b) => a < b ? a : b);
 
     switch (diaMenosAvancado) {
       case 0:
-        return isDark
-            ? const Color.fromARGB(255, 165, 139, 101)
-            : const Color.fromARGB(255, 75, 76, 83);
+        return customColors.iniciado;
       case 1:
-        return isDark
-            ? const Color.fromARGB(255, 150, 106, 40)
-            : const Color.fromARGB(255, 99, 99, 136);
+        return customColors.emAndamento;
       case 2:
-        return isDark
-            ? const Color.fromARGB(255, 255, 153, 0)
-            : const Color.fromARGB(255, 4, 0, 219);
+        return customColors.concluido;
       default:
         return const Color.fromARGB(255, 128, 128, 128);
     }
   }
 
   Color _colorSelected(int atualOrSelected, bool isEvent) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final customColors = Theme.of(context).extension<CustomColors>()!;
     switch (atualOrSelected) {
       case 0:
-        return isEvent
-            ? isDark
-                ? const Color.fromARGB(255, 165, 139, 101)
-                : const Color.fromARGB(255, 61, 60, 71)
-            : isDark
-            ? const Color.fromARGB(255, 165, 139, 101)
-            : const Color.fromARGB(255, 191, 191, 211);
+        return isEvent ? customColors.eventoAtual : customColors.justAtual;
       case 1:
         return isEvent
-            ? isDark
-                ? const Color.fromARGB(255, 165, 139, 101)
-                : const Color.fromARGB(255, 27, 27, 44)
-            : isDark
-            ? const Color.fromARGB(255, 165, 139, 101)
-            : const Color.fromARGB(255, 41, 41, 56);
+            ? customColors.eventoSelecionado
+            : customColors.justSelecionado;
       default:
         return const Color.fromARGB(255, 128, 128, 128);
     }
@@ -164,9 +149,9 @@ class _CalendarPageState extends State<CalendarPage> {
             headerStyle: HeaderStyle(
               titleCentered: true,
               formatButtonVisible: false,
-              titleTextStyle: const TextStyle(
+              titleTextStyle: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Color.fromARGB(255, 86, 86, 141),
+                color: Theme.of(context).extension<CustomColors>()!.months,
                 fontStyle: FontStyle.italic,
               ),
               titleTextFormatter:
@@ -179,9 +164,11 @@ class _CalendarPageState extends State<CalendarPage> {
                       DateFormat.E(
                         locale,
                       ).format(date).substring(0, 1).toUpperCase(),
-              weekdayStyle: TextStyle(color: Colors.black),
+              weekdayStyle: TextStyle(
+                color: Theme.of(context).extension<CustomColors>()!.days,
+              ),
               weekendStyle: TextStyle(
-                color: const Color.fromARGB(255, 99, 99, 136),
+                color: Theme.of(context).extension<CustomColors>()!.weekends,
               ),
             ),
             calendarBuilders: CalendarBuilders(
@@ -196,7 +183,12 @@ class _CalendarPageState extends State<CalendarPage> {
                   child: Text(
                     '${day.day}',
                     style: TextStyle(
-                      color: isEventDay ? Colors.white : Colors.black,
+                      color:
+                          isEventDay
+                              ? Colors.white
+                              : Theme.of(
+                                context,
+                              ).extension<CustomColors>()!.days,
                     ),
                   ),
                 );

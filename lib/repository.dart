@@ -5,6 +5,7 @@ import 'popup.dart';
 import 'textarealist.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter/services.dart';
 
 class NovaPagina extends StatefulWidget {
   final String titulo;
@@ -47,6 +48,23 @@ class _repositoryPageState extends State<NovaPagina> {
             Navigator.pop(context);
           },
         ),
+        actions: [
+          ElevatedButton(
+            onPressed: () async {
+              Clipboard.setData(
+                ClipboardData(
+                  text: DatabaseHelper().compactData(
+                    await DatabaseHelper().getRepoFull(widget.id),
+                  ),
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+            ),
+            child: const Icon(Icons.copy),
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -79,7 +97,13 @@ class _repositoryPageState extends State<NovaPagina> {
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.all(20),
                   ),
-                  child: const Text('+ Link'),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.public),
+                      SizedBox(width: 8),
+                      Text("Link"),
+                    ],
+                  ),
                 ),
                 Spacer(),
                 ElevatedButton(
@@ -104,7 +128,13 @@ class _repositoryPageState extends State<NovaPagina> {
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.all(20),
                   ),
-                  child: const Text('+ Nota'),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.sticky_note_2),
+                      SizedBox(width: 8),
+                      Text("Note"),
+                    ],
+                  ),
                 ),
                 Spacer(),
                 ElevatedButton(
@@ -134,7 +164,13 @@ class _repositoryPageState extends State<NovaPagina> {
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.all(20),
                   ),
-                  child: const Text('+ Tarefa'),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.task_rounded),
+                      SizedBox(width: 8),
+                      Text("Task"),
+                    ],
+                  ),
                 ),
                 Spacer(),
               ],
@@ -196,6 +232,18 @@ class _repositoryPageState extends State<NovaPagina> {
                         },
                       );
                     },
+                    doAnything: ElevatedButton(
+                      onPressed: () async {
+                        Clipboard.setData(ClipboardData(text: item['url']));
+                      },
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                      ),
+                      child: Icon(Icons.link_rounded),
+                    ),
                   );
                 } else if (item['type'] == 'note') {
                   return TextAreaList(

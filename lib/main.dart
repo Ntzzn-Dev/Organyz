@@ -76,7 +76,33 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Organyz')),
+      appBar: AppBar(
+        title: const Text('Organyz'),
+        actions: [
+          ElevatedButton(
+            onPressed: () async {
+              showCustomPopup(
+                context,
+                'Importar repositório',
+                ['Colar codigo'],
+                onConfirm: (valores) async {
+                  await DatabaseHelper().setRepoFull(
+                    DatabaseHelper().extractData(valores[0]),
+                  );
+                  await _loadItems();
+                  await ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Repositório importado')),
+                  );
+                },
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+            ),
+            child: const Icon(Icons.download),
+          ),
+        ],
+      ),
       body: Column(
         children: [
           Padding(

@@ -1,7 +1,11 @@
+import 'dart:developer';
+
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'dart:convert';
+import 'package:archive/archive.dart';
 
 class DatabaseHelper {
   static Database? _database;
@@ -20,6 +24,9 @@ class DatabaseHelper {
     return await openDatabase(
       path,
       version: 1,
+      onConfigure: (db) async {
+        await db.execute('PRAGMA foreign_keys = ON');
+      },
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE repository (
@@ -35,7 +42,8 @@ class DatabaseHelper {
             title TEXT,
             url TEXT,
             idrepository INTEGER,
-            ordem INTEGER
+            ordem INTEGER,
+            FOREIGN KEY (idrepository) REFERENCES repository(id) ON DELETE CASCADE
           )
         ''');
 
@@ -45,7 +53,8 @@ class DatabaseHelper {
             title TEXT,
             desc TEXT,
             idrepository INTEGER,
-            ordem INTEGER
+            ordem INTEGER,
+            FOREIGN KEY (idrepository) REFERENCES repository(id) ON DELETE CASCADE
           )
         ''');
 
@@ -57,7 +66,8 @@ class DatabaseHelper {
             datafinal TEXT,
             estado INTEGER,
             idrepository INTEGER,
-            ordem INTEGER
+            ordem INTEGER,
+            FOREIGN KEY (idrepository) REFERENCES repository(id) ON DELETE CASCADE
           )
         ''');
       },
@@ -68,7 +78,45 @@ class DatabaseHelper {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, 'organyz.db');
     await deleteDatabase(path);
-    print('Banco de dados deletado com sucesso.');
+    log('Banco de dados deletado com sucesso.');
+  }
+
+  String compactData(List<Map<String, dynamic>> dataList) {
+    final jsonStr = jsonEncode(dataList);
+    final compressed = GZipEncoder().encode(utf8.encode(jsonStr));
+    return base64Encode(compressed!);
+  }
+
+  List<Map<String, dynamic>> extractData(String compacted) {
+    final compressed = base64Decode(compacted);
+    final decompressed = GZipDecoder().decodeBytes(compressed);
+    final decoded = jsonDecode(utf8.decode(decompressed));
+
+    // Garante que o resultado seja uma lista de mapas
+    return List<Map<String, dynamic>>.from(decoded);
+  }
+
+  Future<String> verifyTitle(String baseTitle, String table) async {
+    final db = await database;
+    String title = baseTitle;
+    int counter = 1;
+
+    while (true) {
+      final result = await db.query(
+        table,
+        where: 'title = ?',
+        whereArgs: [title],
+      );
+
+      if (result.isEmpty) {
+        break;
+      }
+
+      counter++;
+      title = '${baseTitle.trim()} ($counter)';
+    }
+
+    return title;
   }
 
   //REPOSITORYS ===============================================================
@@ -78,9 +126,15 @@ class DatabaseHelper {
     return result;
   }
 
-  Future<void> insertItem(String title, String subtitle) async {
+  Future<int> insertItem(String title, String subtitle) async {
     final db = await database;
-    await db.insert('repository', {'title': title, 'subtitle': subtitle});
+    final finalTitle = await verifyTitle(title, 'repository');
+
+    final id = await db.insert('repository', {
+      'title': finalTitle,
+      'subtitle': subtitle,
+    });
+    return id;
   }
 
   Future<void> removeItem(int id) async {
@@ -90,10 +144,11 @@ class DatabaseHelper {
 
   Future<void> updateItem(int id, String title, String subtitle) async {
     final db = await database;
+    final finalTitle = await verifyTitle(title, 'repository');
 
     await db.update(
       'repository',
-      {'title': title, 'subtitle': subtitle},
+      {'title': finalTitle, 'subtitle': subtitle},
       where: 'id = ?',
       whereArgs: [id],
     );
@@ -117,8 +172,10 @@ class DatabaseHelper {
     int ordem,
   ) async {
     final db = await database;
+    final finalTitle = await verifyTitle(title, 'links');
+
     await db.insert('links', {
-      'title': title,
+      'title': finalTitle,
       'url': url,
       'idrepository': idRepository,
       'ordem': ordem,
@@ -132,10 +189,11 @@ class DatabaseHelper {
 
   Future<void> updateLink(int id, String title, String url, int ordem) async {
     final db = await database;
+    final finalTitle = await verifyTitle(title, 'links');
 
     await db.update(
       'links',
-      {'title': title, 'url': url, 'ordem': ordem},
+      {'title': finalTitle, 'url': url, 'ordem': ordem},
       where: 'id = ?',
       whereArgs: [id],
     );
@@ -152,10 +210,18 @@ class DatabaseHelper {
     return result;
   }
 
-  Future<void> insertNote(String title, int idRepository, int ordem) async {
+  Future<void> insertNote(
+    String title,
+    int idRepository,
+    int ordem, {
+    String desc = '',
+  }) async {
     final db = await database;
+    final finalTitle = await verifyTitle(title, 'notes');
+
     await db.insert('notes', {
-      'title': title,
+      'title': finalTitle,
+      'desc': desc,
       'idrepository': idRepository,
       'ordem': ordem,
     });
@@ -174,10 +240,11 @@ class DatabaseHelper {
 
   Future<void> updateNote(int id, String title, int ordem) async {
     final db = await database;
+    final finalTitle = await verifyTitle(title, 'notes');
 
     await db.update(
       'notes',
-      {'title': title, 'ordem': ordem},
+      {'title': finalTitle, 'ordem': ordem},
       where: 'id = ?',
       whereArgs: [id],
     );
@@ -208,16 +275,18 @@ class DatabaseHelper {
     String desc,
     DateTime date,
     int idRepository,
-    int ordem,
-  ) async {
+    int ordem, {
+    int estado = 0,
+  }) async {
     final db = await database;
+    final finalTitle = await verifyTitle(title, 'tasks');
 
     String formattedDate = DateFormat('dd/MM/yyyy').format(date);
     await db.insert('tasks', {
-      'title': title,
+      'title': finalTitle,
       'desc': desc,
       'datafinal': formattedDate,
-      'estado': 0,
+      'estado': estado,
       'idrepository': idRepository,
       'ordem': ordem,
     });
@@ -247,12 +316,13 @@ class DatabaseHelper {
     int ordem,
   ) async {
     final db = await database;
+    final finalTitle = await verifyTitle(title, 'tasks');
 
     String formattedDate = DateFormat('dd/MM/yyyy').format(date);
     await db.update(
       'tasks',
       {
-        'title': title,
+        'title': finalTitle,
         'desc': desc,
         'datafinal': formattedDate,
         'ordem': ordem,
@@ -274,16 +344,22 @@ class DatabaseHelper {
       whereArgs: [idRepository],
     );
 
-    links =
-        links.map((item) {
-          return {...item, 'type': 'link'};
-        }).toList();
-
     List<Map<String, dynamic>> notes = await db.query(
       'notes',
       where: 'idrepository = ?',
       whereArgs: [idRepository],
     );
+
+    List<Map<String, dynamic>> tasks = await db.query(
+      'tasks',
+      where: 'idrepository = ?',
+      whereArgs: [idRepository],
+    );
+
+    links =
+        links.map((item) {
+          return {...item, 'type': 'link'};
+        }).toList();
 
     notes =
         notes
@@ -296,28 +372,93 @@ class DatabaseHelper {
             )
             .toList();
 
-    List<Map<String, dynamic>> tasks = await db.query(
-      'tasks',
-      where: 'idrepository = ?',
-      whereArgs: [idRepository],
-    );
-
     tasks =
         tasks.map((item) {
           return {...item, 'type': 'task'};
         }).toList();
-
-    for (Map<String, dynamic> task in tasks) {
-      String datafinalStr = task['datafinal'];
-      DateTime datafinal = DateFormat('dd/MM/yyyy').parse(datafinalStr);
-      String formattedDate = DateFormat('dd/MM/yyyy').format(datafinal);
-      task['datafinal'] = formattedDate;
-    }
 
     List<Map<String, dynamic>> all = [...links, ...notes, ...tasks];
 
     all.sort((a, b) => (a['ordem'] as int).compareTo(b['ordem'] as int));
 
     return all;
+  }
+
+  Future<List<Map<String, dynamic>>> getRepoFull(int idRepository) async {
+    final db = await database;
+
+    List<Map<String, dynamic>> repo = await db.query(
+      'repository',
+      where: 'id = ?',
+      whereArgs: [idRepository],
+    );
+
+    List<Map<String, dynamic>> links = await db.query(
+      'links',
+      where: 'idrepository = ?',
+      whereArgs: [idRepository],
+    );
+
+    List<Map<String, dynamic>> notes = await db.query(
+      'notes',
+      where: 'idrepository = ?',
+      whereArgs: [idRepository],
+    );
+
+    List<Map<String, dynamic>> tasks = await db.query(
+      'tasks',
+      where: 'idrepository = ?',
+      whereArgs: [idRepository],
+    );
+
+    repo = repo.map((item) => {...item, 'type': 'repo'}).toList();
+
+    links = links.map((item) => {...item, 'type': 'link'}).toList();
+
+    notes = notes.map((item) => {...item, 'type': 'note'}).toList();
+
+    tasks = tasks.map((item) => {...item, 'type': 'task'}).toList();
+
+    List<Map<String, dynamic>> all = [...links, ...notes, ...tasks];
+
+    all.sort((a, b) => (a['ordem'] as int).compareTo(b['ordem'] as int));
+
+    return [...repo, ...all];
+  }
+
+  Future<void> setRepoFull(List<Map<String, dynamic>> repoFull) async {
+    log('Acao iniciada');
+    int idRep = 0;
+
+    for (int index = 0; index < repoFull.length; index++) {
+      Map<String, dynamic> item = repoFull[index];
+      log(item['type']);
+      try {
+        if (item['type'] == 'repo') {
+          idRep = await insertItem(item['title'], item['subtitle']);
+        }
+        if (item['type'] == 'link') {
+          await insertLink(item['title'], item['url'], idRep, index);
+        }
+        if (item['type'] == 'note') {
+          await insertNote(item['title'], idRep, index, desc: item['desc']);
+        }
+        if (item['type'] == 'task') {
+          DateTime datafinal = DateFormat(
+            'dd/MM/yyyy',
+          ).parse(item['datafinal']);
+          await insertTask(
+            item['title'],
+            item['desc'],
+            datafinal,
+            idRep,
+            index,
+            estado: item['estado'],
+          );
+        }
+      } catch (e) {
+        log('Error: $e');
+      }
+    }
   }
 }

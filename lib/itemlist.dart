@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:organyz/themes.dart';
 
 class ItemExpand extends StatefulWidget {
   final int id;
@@ -10,6 +11,7 @@ class ItemExpand extends StatefulWidget {
   final VoidCallback? onPressedEdit;
   final VoidCallback? onPressedOpen;
   final VoidCallback? onPressedCard;
+  final Widget? doAnything;
   final int? expandItem;
 
   const ItemExpand({
@@ -23,6 +25,7 @@ class ItemExpand extends StatefulWidget {
     this.onPressedEdit,
     this.onPressedOpen,
     this.onPressedCard,
+    this.doAnything,
     this.expandItem,
   });
 
@@ -38,20 +41,14 @@ class _ItemExpandState extends State<ItemExpand> {
   }
 
   Color get corState {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final customColors = Theme.of(context).extension<CustomColors>()!;
     switch (widget.estadoAtual) {
       case 0:
-        return isDark
-            ? const Color.fromARGB(255, 165, 139, 101)
-            : const Color.fromARGB(255, 75, 76, 83);
+        return customColors.iniciado;
       case 1:
-        return isDark
-            ? const Color.fromARGB(255, 150, 106, 40)
-            : const Color.fromARGB(255, 99, 99, 136);
+        return customColors.emAndamento;
       case 2:
-        return isDark
-            ? const Color.fromARGB(255, 255, 153, 0)
-            : const Color.fromARGB(255, 4, 0, 219);
+        return customColors.concluido;
       default:
         return const Color.fromARGB(255, 128, 128, 128);
     }
@@ -189,13 +186,19 @@ class _ItemExpandState extends State<ItemExpand> {
                                       ? textDesc()
                                       : const SizedBox.shrink(),
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
-                                      editButton(),
-                                      const SizedBox(width: 4),
-                                      widget.expandItem == 1
-                                          ? deleteButton()
-                                          : const SizedBox.shrink(),
+                                      widget.doAnything ??
+                                          const SizedBox.shrink(),
+                                      Row(
+                                        children: [
+                                          editButton(),
+                                          const SizedBox(width: 4),
+                                          if (widget.expandItem == 1)
+                                            deleteButton(),
+                                        ],
+                                      ),
                                     ],
                                   ),
                                 ],
