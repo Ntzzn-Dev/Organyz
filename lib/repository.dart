@@ -94,7 +94,7 @@ class _repositoryPageState extends State<Repo> {
                   log(valores[0].toString());
                   log(valores[1].toString());
                   log(valores[2].toString());
-                  await DatabaseHelper().updateItem(
+                  await DatabaseHelper().updateRepo(
                     widget.id,
                     valores[0],
                     valores[1],

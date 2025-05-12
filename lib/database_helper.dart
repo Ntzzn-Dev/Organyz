@@ -33,7 +33,8 @@ class DatabaseHelper {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT,
             subtitle TEXT,
-            cor TEXT
+            cor TEXT, 
+            ordem INTEGER
           )
         ''');
 
@@ -145,29 +146,39 @@ class DatabaseHelper {
   }
 
   //REPOSITORYS ===============================================================
-  Future<List<Map<String, dynamic>>> getItems() async {
+  Future<List<Map<String, dynamic>>> getRepo() async {
     final db = await database;
     List<Map<String, dynamic>> result = await db.query('repository');
-    return result;
+    final mutableResult = List<Map<String, dynamic>>.from(result);
+    mutableResult.sort(
+      (a, b) => (a['ordem'] as int).compareTo(b['ordem'] as int),
+    );
+    return mutableResult;
   }
 
-  Future<int> insertItem(String title, String subtitle, String? cor) async {
+  Future<int> insertRepo(
+    String title,
+    String subtitle,
+    String? cor,
+    int? ordem,
+  ) async {
     final db = await database;
 
     final id = await db.insert('repository', {
       'title': title,
       'subtitle': subtitle,
       'cor': cor,
+      'ordem': ordem,
     });
     return id;
   }
 
-  Future<void> removeItem(int id) async {
+  Future<void> removeRepo(int id) async {
     final db = await database;
     await db.delete('repository', where: 'id = ?', whereArgs: [id]);
   }
 
-  Future<void> updateItem(
+  Future<void> updateRepo(
     int id,
     String title,
     String subtitle,
@@ -181,6 +192,20 @@ class DatabaseHelper {
       where: 'id = ?',
       whereArgs: [id],
     );
+  }
+
+  Future<void> setOrdemRepo(List<int> ids) async {
+    final db = await database;
+    int count = 0;
+    for (int id in ids) {
+      await db.update(
+        'repository',
+        {'ordem': count},
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+      count++;
+    }
   }
 
   //LINKS =====================================================================
@@ -467,10 +492,11 @@ class DatabaseHelper {
             'repository',
           );
           if (idRep == -1) {
-            idRep = await insertItem(
+            idRep = await insertRepo(
               item['title'],
               item['subtitle'],
               item['cor'],
+              item['ordem'],
             );
           } else {
             mesclagem = true;

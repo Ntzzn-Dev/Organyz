@@ -67,7 +67,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _loadItems() async {
-    items = await DatabaseHelper().getItems();
+    items = await DatabaseHelper().getRepo();
     setState(() {});
   }
 
@@ -110,7 +110,7 @@ class _HomePageState extends State<HomePage> {
             onPressed: () async {
               List<Map<String, dynamic>> repoBases = [];
               for (Map<String, dynamic> repo
-                  in await DatabaseHelper().getItems()) {
+                  in await DatabaseHelper().getRepo()) {
                 repoBases.add({
                   'base64': DatabaseHelper().compactData(
                     await DatabaseHelper().getRepoFull(repo['id']),
@@ -193,10 +193,11 @@ class _HomePageState extends State<HomePage> {
                         {'value': 'Cor', 'type': 'hex'},
                       ],
                       onConfirm: (valores) async {
-                        await DatabaseHelper().insertItem(
+                        await DatabaseHelper().insertRepo(
                           valores[0],
                           valores[1],
                           valores[2],
+                          items.length,
                         );
                         await _loadItems();
                         await ScaffoldMessenger.of(context).showSnackBar(
@@ -225,44 +226,67 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
           Expanded(
-            child: ListView.builder(
-              itemCount: items.length,
-              itemBuilder: (context, index) {
-                return ItemExpand(
-                  title: items[index]['title'],
-                  id: index,
-                  subtitle: items[index]['subtitle'],
-                  onPressedDel: () async {
-                    bool aceito = await showCustomPopup(
-                      context,
-                      'Deletar repositório?',
-                      [],
-                    );
-                    if (!aceito) {
-                      return;
-                    }
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          'Item deletado: ${items[index]['title']}',
-                        ),
-                      ),
-                    );
-                    setState(() {
-                      DatabaseHelper().removeItem(items[index]['id']);
-                      _loadItems();
-                    });
-                  },
-                  onPressedCard: () {
-                    _openRepository(
-                      items[index]['title'],
-                      items[index]['subtitle'],
-                      items[index]['id'],
-                      items[index]['cor'] ?? '',
-                    );
-                  },
-                );
+            child: ReorderableListView(
+              onReorder: (oldIndex, newIndex) async {
+                List<Map<String, dynamic>> modifiableItems =
+                    items
+                        .map((item) => Map<String, dynamic>.from(item))
+                        .toList();
+
+                if (newIndex > oldIndex) newIndex -= 1;
+
+                final item = modifiableItems.removeAt(oldIndex);
+                modifiableItems.insert(newIndex, item);
+
+                setState(() {
+                  items = modifiableItems;
+                });
+
+                List<int> orderedIds =
+                    modifiableItems
+                        .map<int>((item) => item['id'] as int)
+                        .toList();
+
+                await DatabaseHelper().setOrdemRepo(orderedIds);
               },
+              children: [
+                for (int index = 0; index < items.length; index++)
+                  ItemExpand(
+                    key: ValueKey(items[index]['id']),
+                    title: items[index]['title'],
+                    id: index,
+                    subtitle: items[index]['subtitle'],
+                    onPressedDel: () async {
+                      bool aceito = await showCustomPopup(
+                        context,
+                        'Deletar repositório?',
+                        [],
+                      );
+                      if (!aceito) {
+                        return;
+                      }
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Item deletado: ${items[index]['title']}',
+                          ),
+                        ),
+                      );
+                      setState(() {
+                        DatabaseHelper().removeRepo(items[index]['id']);
+                        _loadItems();
+                      });
+                    },
+                    onPressedCard: () {
+                      _openRepository(
+                        items[index]['title'],
+                        items[index]['subtitle'],
+                        items[index]['id'],
+                        items[index]['cor'] ?? '',
+                      );
+                    },
+                  ),
+              ],
             ),
           ),
         ],
