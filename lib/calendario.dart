@@ -69,11 +69,11 @@ class _CalendarPageState extends State<CalendarPage> {
 
     switch (diaMenosAvancado) {
       case 0:
-        return customColors.iniciadoDefault;
+        return customColors.iniciado;
       case 1:
-        return customColors.emAndamentoDefault;
+        return customColors.emAndamento;
       case 2:
-        return customColors.concluidoDefault;
+        return customColors.concluido;
       default:
         return const Color.fromARGB(255, 128, 128, 128);
     }
@@ -219,6 +219,10 @@ class _CalendarPageState extends State<CalendarPage> {
               todayBuilder: (context, day, focusedDay) {
                 return Container(
                   alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: _isEventDay(day) ? _colorState(day) : null,
+                    shape: BoxShape.circle,
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Container(

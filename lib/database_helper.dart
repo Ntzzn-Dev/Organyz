@@ -454,13 +454,12 @@ class DatabaseHelper {
   }
 
   Future<String> setRepoFull(List<Map<String, dynamic>> repoFull) async {
-    log('Acao iniciada');
     int idRep = 0;
     bool mesclagem = false;
+    String msg = '';
 
     for (int index = 0; index < repoFull.length; index++) {
       Map<String, dynamic> item = repoFull[index];
-      log(item['type']);
       try {
         if (item['type'] == 'repo') {
           idRep = await DatabaseHelper().verifyDuplicate(
@@ -468,7 +467,6 @@ class DatabaseHelper {
             'repository',
           );
           if (idRep == -1) {
-            log('novo');
             idRep = await insertItem(
               item['title'],
               item['subtitle'],
@@ -518,10 +516,13 @@ class DatabaseHelper {
             );
           }
         }
+        msg = mesclagem ? 'Repositório mesclado' : 'Repositório importado';
       } catch (e) {
+        msg = '$e';
         log('Error: $e');
       }
     }
-    return mesclagem ? 'Repositório mesclado' : 'Repositório importado';
+
+    return msg;
   }
 }

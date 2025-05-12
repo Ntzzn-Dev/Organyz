@@ -1,4 +1,7 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'itemlist.dart';
 import 'database_helper.dart';
 import 'popup.dart';
@@ -8,7 +11,7 @@ import 'calendario.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 final ValueNotifier<Color> corPrimaria = ValueNotifier<Color>(
-  Color.fromARGB(255, 11, 3, 80),
+  Color.fromARGB(255, 243, 160, 34),
 );
 
 bool isDark = false;
@@ -65,17 +68,6 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _loadItems() async {
     items = await DatabaseHelper().getItems();
-    final Brightness brightness =
-        WidgetsBinding.instance.platformDispatcher.platformBrightness;
-
-    if (brightness == Brightness.dark) {
-      isDark = true;
-      corPrimaria.value = Color.fromARGB(255, 243, 160, 34);
-    } else {
-      isDark = false;
-      corPrimaria.value = Color.fromARGB(255, 11, 3, 80);
-    }
-
     setState(() {});
   }
 
@@ -93,13 +85,7 @@ class _HomePageState extends State<HomePage> {
             ),
         settings: RouteSettings(name: 'repository'),
       ),
-    ).then((_) {
-      if (isDark) {
-        corPrimaria.value = Color.fromARGB(255, 243, 160, 34);
-      } else {
-        corPrimaria.value = Color.fromARGB(255, 11, 3, 80);
-      }
-    });
+    );
   }
 
   void _openCalendar() {
@@ -109,7 +95,9 @@ class _HomePageState extends State<HomePage> {
         builder: (context) => CalendarPage(),
         settings: RouteSettings(name: 'calendar'),
       ),
-    );
+    ).then((_) {
+      corPrimaria.value = Color.fromARGB(255, 243, 160, 34);
+    });
   }
 
   @override
@@ -120,6 +108,32 @@ class _HomePageState extends State<HomePage> {
         actions: [
           ElevatedButton(
             onPressed: () async {
+              List<Map<String, dynamic>> repoBases = [];
+              for (Map<String, dynamic> repo
+                  in await DatabaseHelper().getItems()) {
+                repoBases.add({
+                  'base64': DatabaseHelper().compactData(
+                    await DatabaseHelper().getRepoFull(repo['id']),
+                  ),
+                  'nome': repo['title'],
+                });
+              }
+
+              String database = '';
+              for (Map<String, dynamic> repo in repoBases) {
+                database += '!<${repo['nome']}>!\n${repo['base64']}\n\n';
+              }
+
+              Clipboard.setData(ClipboardData(text: database));
+            },
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+            ),
+            child: const Icon(Icons.upload),
+          ),
+          SizedBox(width: 5),
+          ElevatedButton(
+            onPressed: () async {
               showCustomPopup(
                 context,
                 'Importar repositório',
@@ -127,13 +141,28 @@ class _HomePageState extends State<HomePage> {
                   {'value': 'Colar codigo', 'type': 'text'},
                 ],
                 onConfirm: (valores) async {
-                  final mensagem = await DatabaseHelper().setRepoFull(
-                    DatabaseHelper().extractData(valores[0]),
+                  final RegExp regex = RegExp(
+                    r'(?:!<.*?>!\s*)?(H4sIA[\s\S]*?)(?=!<|$)',
+                    multiLine: true,
                   );
+                  final List<String> base64List =
+                      regex
+                          .allMatches(valores[0])
+                          .map((match) => match.group(1)!)
+                          .toList();
+
+                  String msg = '';
+                  for (String base64 in base64List) {
+                    msg = await DatabaseHelper().setRepoFull(
+                      DatabaseHelper().extractData(base64.trim()),
+                    );
+                  }
+                  msg = base64List.length > 1 ? 'Repositórios Importados' : msg;
+
                   await _loadItems();
                   await ScaffoldMessenger.of(
                     context,
-                  ).showSnackBar(SnackBar(content: Text(mensagem)));
+                  ).showSnackBar(SnackBar(content: Text(msg)));
                 },
               );
             },
@@ -142,6 +171,7 @@ class _HomePageState extends State<HomePage> {
             ),
             child: const Icon(Icons.download),
           ),
+          SizedBox(width: 5),
         ],
       ),
       body: Column(

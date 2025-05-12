@@ -97,19 +97,16 @@ ThemeData lighttheme(Color corPrimaria) {
     ),
     extensions: <ThemeExtension<dynamic>>[
       CustomColors(
-        iniciado: tons['iniciado'] ?? Color.fromARGB(255, 75, 76, 83),
-        iniciadoDefault: Color.fromARGB(255, 75, 76, 83),
-        emAndamento: tons['emAndamento'] ?? Color.fromARGB(255, 99, 99, 136),
-        emAndamentoDefault: Color.fromARGB(255, 99, 99, 136),
-        concluido: tons['concluido'] ?? Color.fromARGB(255, 4, 0, 219),
-        concluidoDefault: Color.fromARGB(255, 4, 0, 219),
-        eventoSelecionado: Color.fromARGB(255, 27, 27, 44),
-        eventoAtual: Color.fromARGB(255, 61, 60, 71),
-        justSelecionado: Color.fromARGB(255, 41, 41, 56),
+        iniciado: tons['iniciado'] ?? Color.fromARGB(255, 165, 139, 101),
+        emAndamento: tons['emAndamento'] ?? Color.fromARGB(255, 150, 106, 40),
+        concluido: tons['concluido'] ?? Color.fromARGB(255, 255, 153, 0),
+        eventoSelecionado: Color.fromARGB(255, 73, 62, 45),
+        eventoAtual: Color.fromARGB(255, 82, 69, 50),
+        justSelecionado: Color.fromARGB(255, 105, 89, 64),
         justAtual: Color.fromARGB(255, 191, 191, 211),
         days: Color.fromARGB(255, 0, 0, 0),
-        months: Color.fromARGB(255, 86, 86, 141),
-        weekends: Color.fromARGB(255, 99, 99, 136),
+        months: Color.fromARGB(255, 190, 144, 84),
+        weekends: Color.fromARGB(255, 139, 120, 85),
       ),
     ],
   );
@@ -166,11 +163,8 @@ ThemeData darkTheme(Color corPrimaria) {
     extensions: <ThemeExtension<dynamic>>[
       CustomColors(
         iniciado: tons['iniciado'] ?? Color.fromARGB(255, 165, 139, 101),
-        iniciadoDefault: Color.fromARGB(255, 165, 139, 101),
         emAndamento: tons['emAndamento'] ?? Color.fromARGB(255, 150, 106, 40),
-        emAndamentoDefault: Color.fromARGB(255, 150, 106, 40),
         concluido: tons['concluido'] ?? Color.fromARGB(255, 255, 153, 0),
-        concluidoDefault: Color.fromARGB(255, 255, 153, 0),
         eventoSelecionado: Color.fromARGB(255, 73, 62, 45),
         eventoAtual: Color.fromARGB(255, 82, 69, 50),
         justSelecionado: Color.fromARGB(255, 105, 89, 64),
@@ -186,11 +180,8 @@ ThemeData darkTheme(Color corPrimaria) {
 @immutable
 class CustomColors extends ThemeExtension<CustomColors> {
   final Color iniciado;
-  final Color iniciadoDefault;
   final Color emAndamento;
-  final Color emAndamentoDefault;
   final Color concluido;
-  final Color concluidoDefault;
   final Color eventoSelecionado;
   final Color eventoAtual;
   final Color justSelecionado;
@@ -201,11 +192,8 @@ class CustomColors extends ThemeExtension<CustomColors> {
 
   const CustomColors({
     required this.iniciado,
-    required this.iniciadoDefault,
     required this.emAndamento,
-    required this.emAndamentoDefault,
     required this.concluido,
-    required this.concluidoDefault,
     required this.eventoSelecionado,
     required this.eventoAtual,
     required this.justSelecionado,
@@ -233,11 +221,8 @@ class CustomColors extends ThemeExtension<CustomColors> {
   }) {
     return CustomColors(
       iniciado: iniciado ?? this.iniciado,
-      iniciadoDefault: iniciadoDefault ?? this.iniciadoDefault,
       emAndamento: emAndamento ?? this.emAndamento,
-      emAndamentoDefault: emAndamentoDefault ?? this.emAndamentoDefault,
       concluido: concluido ?? this.concluido,
-      concluidoDefault: concluidoDefault ?? this.concluidoDefault,
       eventoSelecionado: eventoSelecionado ?? this.eventoSelecionado,
       eventoAtual: eventoAtual ?? this.eventoAtual,
       justSelecionado: justSelecionado ?? this.justSelecionado,
@@ -253,13 +238,8 @@ class CustomColors extends ThemeExtension<CustomColors> {
     if (other is! CustomColors) return this;
     return CustomColors(
       iniciado: Color.lerp(iniciado, other.iniciado, t)!,
-      iniciadoDefault: Color.lerp(iniciadoDefault, other.iniciadoDefault, t)!,
       emAndamento: Color.lerp(emAndamento, other.emAndamento, t)!,
-      emAndamentoDefault:
-          Color.lerp(emAndamentoDefault, other.emAndamentoDefault, t)!,
       concluido: Color.lerp(concluido, other.concluido, t)!,
-      concluidoDefault:
-          Color.lerp(concluidoDefault, other.concluidoDefault, t)!,
       eventoSelecionado:
           Color.lerp(eventoSelecionado, other.eventoSelecionado, t)!,
       eventoAtual: Color.lerp(eventoAtual, other.eventoAtual, t)!,
