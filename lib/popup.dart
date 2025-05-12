@@ -1,11 +1,11 @@
-import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:organyz/database_helper.dart';
 
 Future<bool> showCustomPopup(
   BuildContext context,
   String label,
-  List<String> fieldLabels, {
+  List<Map<String, dynamic>> fieldLabels, {
   List<String>? fieldValues,
   void Function(List<String> values)? onConfirm,
 }) async {
@@ -15,7 +15,7 @@ Future<bool> showCustomPopup(
       text:
           fieldValues != null && index < fieldValues.length
               ? fieldValues[index]
-              : fieldLabels[index].toLowerCase().contains('data')
+              : fieldLabels[index]['type'].toLowerCase().contains('data')
               ? 'xx/xx/xxxx'
               : '',
     ),
@@ -37,9 +37,9 @@ Future<bool> showCustomPopup(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: List.generate(fieldLabels.length, (index) {
-                  bool isDateField = fieldLabels[index].toLowerCase().contains(
-                    'data',
-                  );
+                  bool isDateField = fieldLabels[index]['type']
+                      .toLowerCase()
+                      .contains('data');
 
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 12),
@@ -59,10 +59,11 @@ Future<bool> showCustomPopup(
 
                                   if (newValue.text.length <
                                       oldValue.text.length) {
-                                    if (digitsOnly.isNotEmpty) {
+                                    if (digitsOnly.isNotEmpty &&
+                                        oldValue.text.contains('x')) {
                                       digitsOnly = digitsOnly.substring(
                                         0,
-                                        digitsOnly.length,
+                                        digitsOnly.length - 1,
                                       );
                                     }
                                   }
@@ -118,7 +119,7 @@ Future<bool> showCustomPopup(
                               ]
                               : [],
                       decoration: InputDecoration(
-                        labelText: fieldLabels[index],
+                        labelText: fieldLabels[index]['value'],
                         errorText: hasError[index] ? 'Campo inválido' : null,
                         enabledBorder: OutlineInputBorder(
                           borderSide: BorderSide(
@@ -141,29 +142,61 @@ Future<bool> showCustomPopup(
                 child: const Text('Cancelar'),
               ),
               ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
                   final values =
                       controllers.map((controller) => controller.text).toList();
 
-                  List<int> matchingIndices =
+                  List<int> matchingIndicesData =
                       fieldLabels
                           .asMap()
                           .entries
                           .where(
-                            (entry) =>
-                                entry.value.toLowerCase().contains('data'),
+                            (entry) => entry.value['type']
+                                .toLowerCase()
+                                .contains('data'),
+                          )
+                          .map((entry) => entry.key)
+                          .toList();
+
+                  List<int> matchingIndicesTitle =
+                      fieldLabels
+                          .asMap()
+                          .entries
+                          .where(
+                            (entry) => entry.value['type']
+                                .toLowerCase()
+                                .contains('title'),
                           )
                           .map((entry) => entry.key)
                           .toList();
 
                   bool hasAnyError = false;
 
-                  for (int i in matchingIndices) {
+                  for (int i in matchingIndicesData) {
                     String digitsOnly = values[i].replaceAll(
                       RegExp(r'[^0-9]'),
                       '',
                     );
                     if (digitsOnly.length < 8) {
+                      setState(() {
+                        hasError[i] = true;
+                      });
+                      hasAnyError = true;
+                    } else {
+                      setState(() {
+                        hasError[i] = false;
+                      });
+                    }
+                  }
+
+                  for (int i in matchingIndicesTitle) {
+                    String tituloEscolhido = values[i];
+                    if (tituloEscolhido.trim() !=
+                        (await DatabaseHelper().verifyTitle(
+                          tituloEscolhido,
+                          'repository',
+                          currentId: fieldLabels[i]['id'],
+                        )).trim()) {
                       setState(() {
                         hasError[i] = true;
                       });

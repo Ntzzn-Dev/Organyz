@@ -1,125 +1,196 @@
 import 'package:flutter/material.dart';
 
-final ThemeData lighttheme = ThemeData(
-  primarySwatch: Colors.deepPurple,
-  scaffoldBackgroundColor: const Color.fromARGB(255, 242, 242, 242),
-  appBarTheme: const AppBarTheme(
-    backgroundColor: Color.fromARGB(255, 237, 237, 237),
-    foregroundColor: Color.fromARGB(255, 11, 3, 80),
-  ),
-  elevatedButtonTheme: ElevatedButtonThemeData(
-    style: ElevatedButton.styleFrom(
-      backgroundColor: Color.fromARGB(255, 242, 242, 242),
-      foregroundColor: Color.fromARGB(255, 11, 3, 80),
-    ),
-  ),
-  cardTheme: CardTheme(color: Color.fromARGB(255, 242, 242, 242)),
-  dialogTheme: DialogTheme(backgroundColor: Color.fromARGB(255, 242, 242, 242)),
+Color hsvToRgb(Color color, double s, double v) {
+  final hsl = HSLColor.fromColor(color);
 
-  /*textTheme: ThemeData.light().textTheme.apply(
+  double c = v * s;
+  double x = c * (1 - ((hsl.hue / 60) % 2 - 1).abs());
+  double m = v - c;
+
+  double r_, g_, b_;
+
+  if (hsl.hue < 60) {
+    r_ = c;
+    g_ = x;
+    b_ = 0;
+  } else if (hsl.hue < 120) {
+    r_ = x;
+    g_ = c;
+    b_ = 0;
+  } else if (hsl.hue < 180) {
+    r_ = 0;
+    g_ = c;
+    b_ = x;
+  } else if (hsl.hue < 240) {
+    r_ = 0;
+    g_ = x;
+    b_ = c;
+  } else if (hsl.hue < 300) {
+    r_ = x;
+    g_ = 0;
+    b_ = c;
+  } else {
+    r_ = c;
+    g_ = 0;
+    b_ = x;
+  }
+
+  int r = ((r_ + m) * 255).round();
+  int g = ((g_ + m) * 255).round();
+  int b = ((b_ + m) * 255).round();
+
+  return Color.fromARGB(255, r, g, b);
+}
+
+Map<String, Color> gerarTons(Color base) {
+  return {
+    'iniciado': hsvToRgb(base, 0.2, 0.3),
+    'emAndamento': hsvToRgb(base, 0.4, 0.6),
+    'concluido': base,
+  };
+}
+
+ThemeData lighttheme(Color corPrimaria) {
+  final tons = gerarTons(corPrimaria);
+  return ThemeData(
+    primarySwatch: Colors.indigo,
+    scaffoldBackgroundColor: Color.fromARGB(255, 242, 242, 242),
+    appBarTheme: AppBarTheme(
+      backgroundColor: Color.fromARGB(255, 237, 237, 237),
+      foregroundColor: corPrimaria,
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Color.fromARGB(255, 242, 242, 242),
+        foregroundColor: corPrimaria,
+      ),
+    ),
+    cardTheme: CardTheme(color: Color.fromARGB(255, 242, 242, 242)),
+    dialogTheme: DialogTheme(
+      backgroundColor: Color.fromARGB(255, 242, 242, 242),
+    ),
+
+    /*textTheme: ThemeData.light().textTheme.apply(
     bodyColor: Color.fromARGB(255, 11, 3, 80),
     displayColor: Color.fromARGB(255, 11, 3, 80),
   ),*/
-  inputDecorationTheme: InputDecorationTheme(
-    labelStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
-    floatingLabelStyle: TextStyle(
-      color: Color.fromARGB(255, 11, 3, 80),
-      fontSize: 20,
-      fontWeight: FontWeight.w900,
-    ),
-    hintStyle: TextStyle(color: Colors.grey),
+    inputDecorationTheme: InputDecorationTheme(
+      labelStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+      floatingLabelStyle: TextStyle(
+        color: corPrimaria,
+        fontSize: 20,
+        fontWeight: FontWeight.w900,
+      ),
+      hintStyle: TextStyle(color: Colors.grey),
 
-    filled: true,
-    fillColor: Color.fromRGBO(228, 228, 228, 0.5),
-    focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: BorderSide(
-        color: Color.fromARGB(255, 11, 3, 80), // Cor da borda ao focar
-        width: 2.0,
+      filled: true,
+      fillColor: Color.fromRGBO(228, 228, 228, 0.5),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: corPrimaria, width: 2.0),
       ),
     ),
-  ),
-  extensions: <ThemeExtension<dynamic>>[
-    const CustomColors(
-      iniciado: Color.fromARGB(255, 75, 76, 83),
-      emAndamento: Color.fromARGB(255, 99, 99, 136),
-      concluido: Color.fromARGB(255, 4, 0, 219),
-      eventoSelecionado: Color.fromARGB(255, 27, 27, 44),
-      eventoAtual: Color.fromARGB(255, 61, 60, 71),
-      justSelecionado: Color.fromARGB(255, 41, 41, 56),
-      justAtual: Color.fromARGB(255, 191, 191, 211),
-      days: Color.fromARGB(255, 0, 0, 0),
-      months: Color.fromARGB(255, 86, 86, 141),
-      weekends: Color.fromARGB(255, 99, 99, 136),
+    textSelectionTheme: TextSelectionThemeData(
+      selectionColor: corPrimaria.withAlpha(60),
+      cursorColor: Color.fromARGB(255, 0, 0, 0),
+      selectionHandleColor: corPrimaria,
     ),
-  ],
-);
+    extensions: <ThemeExtension<dynamic>>[
+      CustomColors(
+        iniciado: tons['iniciado'] ?? Color.fromARGB(255, 75, 76, 83),
+        iniciadoDefault: Color.fromARGB(255, 75, 76, 83),
+        emAndamento: tons['emAndamento'] ?? Color.fromARGB(255, 99, 99, 136),
+        emAndamentoDefault: Color.fromARGB(255, 99, 99, 136),
+        concluido: tons['concluido'] ?? Color.fromARGB(255, 4, 0, 219),
+        concluidoDefault: Color.fromARGB(255, 4, 0, 219),
+        eventoSelecionado: Color.fromARGB(255, 27, 27, 44),
+        eventoAtual: Color.fromARGB(255, 61, 60, 71),
+        justSelecionado: Color.fromARGB(255, 41, 41, 56),
+        justAtual: Color.fromARGB(255, 191, 191, 211),
+        days: Color.fromARGB(255, 0, 0, 0),
+        months: Color.fromARGB(255, 86, 86, 141),
+        weekends: Color.fromARGB(255, 99, 99, 136),
+      ),
+    ],
+  );
+}
 
-final ThemeData darktheme = ThemeData(
-  primarySwatch: Colors.deepPurple,
-  scaffoldBackgroundColor: const Color.fromARGB(255, 46, 46, 46),
-  appBarTheme: const AppBarTheme(
-    backgroundColor: Color.fromARGB(255, 37, 37, 37),
-    foregroundColor: Color.fromARGB(255, 243, 160, 34),
-  ),
-  elevatedButtonTheme: ElevatedButtonThemeData(
-    style: ElevatedButton.styleFrom(
-      backgroundColor: Color.fromARGB(255, 46, 46, 46),
-      foregroundColor: Color.fromARGB(255, 243, 160, 34),
+ThemeData darkTheme(Color corPrimaria) {
+  final tons = gerarTons(corPrimaria);
+  return ThemeData(
+    primarySwatch: Colors.orange,
+    scaffoldBackgroundColor: Color.fromARGB(255, 64, 64, 64),
+    appBarTheme: AppBarTheme(
+      backgroundColor: Color.fromARGB(255, 37, 37, 37),
+      foregroundColor: corPrimaria,
     ),
-  ),
-  cardTheme: CardTheme(color: Color.fromARGB(255, 46, 46, 46)),
-  dialogTheme: DialogTheme(backgroundColor: Color.fromARGB(255, 46, 46, 46)),
-
-  textTheme: ThemeData.dark().textTheme.apply(
-    bodyColor: Color.fromARGB(255, 242, 242, 242),
-    displayColor: Color.fromARGB(255, 242, 242, 242),
-  ),
-  inputDecorationTheme: InputDecorationTheme(
-    labelStyle: TextStyle(
-      fontSize: 18,
-      color: Color.fromARGB(255, 242, 242, 242),
-      fontWeight: FontWeight.w900,
-    ),
-    floatingLabelStyle: TextStyle(
-      color: Color.fromARGB(255, 243, 160, 34),
-      fontSize: 20,
-      fontWeight: FontWeight.w900,
-    ),
-    hintStyle: TextStyle(color: Colors.grey),
-
-    filled: true,
-    fillColor: Color.fromRGBO(60, 60, 60, 0.5),
-
-    focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: BorderSide(
-        color: Color.fromARGB(255, 243, 160, 34),
-        width: 2.0,
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Color.fromARGB(255, 64, 64, 64),
+        foregroundColor: corPrimaria,
       ),
     ),
-  ),
-  extensions: <ThemeExtension<dynamic>>[
-    const CustomColors(
-      iniciado: Color.fromARGB(255, 165, 139, 101),
-      emAndamento: Color.fromARGB(255, 150, 106, 40),
-      concluido: Color.fromARGB(255, 255, 153, 0),
-      eventoSelecionado: Color.fromARGB(255, 73, 62, 45),
-      eventoAtual: Color.fromARGB(255, 82, 69, 50),
-      justSelecionado: Color.fromARGB(255, 105, 89, 64),
-      justAtual: Color.fromARGB(255, 58, 58, 57),
-      days: Color.fromARGB(255, 214, 214, 214),
-      months: Color.fromARGB(255, 190, 144, 84),
-      weekends: Color.fromARGB(255, 139, 120, 85),
+    cardTheme: CardTheme(color: Color.fromARGB(255, 64, 64, 64)),
+    dialogTheme: DialogTheme(backgroundColor: Color.fromARGB(255, 64, 64, 64)),
+
+    textTheme: ThemeData.dark().textTheme.apply(
+      bodyColor: Color.fromARGB(255, 242, 242, 242),
+      displayColor: Color.fromARGB(255, 242, 242, 242),
     ),
-  ],
-);
+    inputDecorationTheme: InputDecorationTheme(
+      labelStyle: TextStyle(
+        fontSize: 18,
+        color: Color.fromARGB(255, 242, 242, 242),
+        fontWeight: FontWeight.w900,
+      ),
+      floatingLabelStyle: TextStyle(
+        color: corPrimaria,
+        fontSize: 20,
+        fontWeight: FontWeight.w900,
+      ),
+      hintStyle: TextStyle(color: Colors.grey),
+
+      filled: true,
+      fillColor: Color.fromRGBO(60, 60, 60, 0.5),
+
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: corPrimaria, width: 2.0),
+      ),
+    ),
+    textSelectionTheme: TextSelectionThemeData(
+      selectionColor: corPrimaria.withAlpha(60),
+      cursorColor: Color.fromARGB(255, 0, 0, 0),
+      selectionHandleColor: corPrimaria,
+    ),
+    extensions: <ThemeExtension<dynamic>>[
+      CustomColors(
+        iniciado: tons['iniciado'] ?? Color.fromARGB(255, 165, 139, 101),
+        iniciadoDefault: Color.fromARGB(255, 165, 139, 101),
+        emAndamento: tons['emAndamento'] ?? Color.fromARGB(255, 150, 106, 40),
+        emAndamentoDefault: Color.fromARGB(255, 150, 106, 40),
+        concluido: tons['concluido'] ?? Color.fromARGB(255, 255, 153, 0),
+        concluidoDefault: Color.fromARGB(255, 255, 153, 0),
+        eventoSelecionado: Color.fromARGB(255, 73, 62, 45),
+        eventoAtual: Color.fromARGB(255, 82, 69, 50),
+        justSelecionado: Color.fromARGB(255, 105, 89, 64),
+        justAtual: Color.fromARGB(255, 58, 58, 57),
+        days: Color.fromARGB(255, 214, 214, 214),
+        months: Color.fromARGB(255, 190, 144, 84),
+        weekends: Color.fromARGB(255, 139, 120, 85),
+      ),
+    ],
+  );
+}
 
 @immutable
 class CustomColors extends ThemeExtension<CustomColors> {
   final Color iniciado;
+  final Color iniciadoDefault;
   final Color emAndamento;
+  final Color emAndamentoDefault;
   final Color concluido;
+  final Color concluidoDefault;
   final Color eventoSelecionado;
   final Color eventoAtual;
   final Color justSelecionado;
@@ -130,8 +201,11 @@ class CustomColors extends ThemeExtension<CustomColors> {
 
   const CustomColors({
     required this.iniciado,
+    required this.iniciadoDefault,
     required this.emAndamento,
+    required this.emAndamentoDefault,
     required this.concluido,
+    required this.concluidoDefault,
     required this.eventoSelecionado,
     required this.eventoAtual,
     required this.justSelecionado,
@@ -144,8 +218,11 @@ class CustomColors extends ThemeExtension<CustomColors> {
   @override
   CustomColors copyWith({
     Color? iniciado,
+    Color? iniciadoDefault,
     Color? emAndamento,
+    Color? emAndamentoDefault,
     Color? concluido,
+    Color? concluidoDefault,
     Color? eventoSelecionado,
     Color? eventoAtual,
     Color? justSelecionado,
@@ -156,8 +233,11 @@ class CustomColors extends ThemeExtension<CustomColors> {
   }) {
     return CustomColors(
       iniciado: iniciado ?? this.iniciado,
+      iniciadoDefault: iniciadoDefault ?? this.iniciadoDefault,
       emAndamento: emAndamento ?? this.emAndamento,
+      emAndamentoDefault: emAndamentoDefault ?? this.emAndamentoDefault,
       concluido: concluido ?? this.concluido,
+      concluidoDefault: concluidoDefault ?? this.concluidoDefault,
       eventoSelecionado: eventoSelecionado ?? this.eventoSelecionado,
       eventoAtual: eventoAtual ?? this.eventoAtual,
       justSelecionado: justSelecionado ?? this.justSelecionado,
@@ -173,8 +253,13 @@ class CustomColors extends ThemeExtension<CustomColors> {
     if (other is! CustomColors) return this;
     return CustomColors(
       iniciado: Color.lerp(iniciado, other.iniciado, t)!,
+      iniciadoDefault: Color.lerp(iniciadoDefault, other.iniciadoDefault, t)!,
       emAndamento: Color.lerp(emAndamento, other.emAndamento, t)!,
+      emAndamentoDefault:
+          Color.lerp(emAndamentoDefault, other.emAndamentoDefault, t)!,
       concluido: Color.lerp(concluido, other.concluido, t)!,
+      concluidoDefault:
+          Color.lerp(concluidoDefault, other.concluidoDefault, t)!,
       eventoSelecionado:
           Color.lerp(eventoSelecionado, other.eventoSelecionado, t)!,
       eventoAtual: Color.lerp(eventoAtual, other.eventoAtual, t)!,

@@ -69,11 +69,11 @@ class _CalendarPageState extends State<CalendarPage> {
 
     switch (diaMenosAvancado) {
       case 0:
-        return customColors.iniciado;
+        return customColors.iniciadoDefault;
       case 1:
-        return customColors.emAndamento;
+        return customColors.emAndamentoDefault;
       case 2:
-        return customColors.concluido;
+        return customColors.concluidoDefault;
       default:
         return const Color.fromARGB(255, 128, 128, 128);
     }

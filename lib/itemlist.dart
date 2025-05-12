@@ -42,6 +42,7 @@ class _ItemExpandState extends State<ItemExpand> {
 
   Color get corState {
     final customColors = Theme.of(context).extension<CustomColors>()!;
+
     switch (widget.estadoAtual) {
       case 0:
         return customColors.iniciado;

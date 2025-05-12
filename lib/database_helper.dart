@@ -32,7 +32,8 @@ class DatabaseHelper {
           CREATE TABLE repository (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT,
-            subtitle TEXT
+            subtitle TEXT,
+            cor TEXT
           )
         ''');
 
@@ -91,32 +92,56 @@ class DatabaseHelper {
     final compressed = base64Decode(compacted);
     final decompressed = GZipDecoder().decodeBytes(compressed);
     final decoded = jsonDecode(utf8.decode(decompressed));
-
-    // Garante que o resultado seja uma lista de mapas
     return List<Map<String, dynamic>>.from(decoded);
   }
 
-  Future<String> verifyTitle(String baseTitle, String table) async {
+  Future<String> verifyTitle(
+    String baseTitle,
+    String table, {
+    int? currentId,
+  }) async {
     final db = await database;
-    String title = baseTitle;
+    String title = baseTitle.trim();
     int counter = 1;
 
     while (true) {
       final result = await db.query(
         table,
-        where: 'title = ?',
-        whereArgs: [title],
+        where: 'title = ? AND id != ?',
+        whereArgs: [title, currentId ?? -1],
       );
 
       if (result.isEmpty) {
         break;
       }
 
-      counter++;
       title = '${baseTitle.trim()} ($counter)';
+      counter++;
     }
 
     return title;
+  }
+
+  Future<int> verifyDuplicate(
+    String baseTitle,
+    String table, {
+    int? currentId,
+  }) async {
+    final db = await database;
+    String title = baseTitle.trim();
+
+    final result = await db.query(
+      table,
+      where: 'title = ? AND id != ?',
+      whereArgs: [title, currentId ?? -1],
+      limit: 1,
+    );
+
+    if (result.isNotEmpty) {
+      return result.first['id'] as int;
+    }
+
+    return -1;
   }
 
   //REPOSITORYS ===============================================================
@@ -126,13 +151,13 @@ class DatabaseHelper {
     return result;
   }
 
-  Future<int> insertItem(String title, String subtitle) async {
+  Future<int> insertItem(String title, String subtitle, String? cor) async {
     final db = await database;
-    final finalTitle = await verifyTitle(title, 'repository');
 
     final id = await db.insert('repository', {
-      'title': finalTitle,
+      'title': title,
       'subtitle': subtitle,
+      'cor': cor,
     });
     return id;
   }
@@ -142,13 +167,17 @@ class DatabaseHelper {
     await db.delete('repository', where: 'id = ?', whereArgs: [id]);
   }
 
-  Future<void> updateItem(int id, String title, String subtitle) async {
+  Future<void> updateItem(
+    int id,
+    String title,
+    String subtitle,
+    String? cor,
+  ) async {
     final db = await database;
-    final finalTitle = await verifyTitle(title, 'repository');
 
     await db.update(
       'repository',
-      {'title': finalTitle, 'subtitle': subtitle},
+      {'title': title, 'subtitle': subtitle, 'cor': cor},
       where: 'id = ?',
       whereArgs: [id],
     );
@@ -189,7 +218,7 @@ class DatabaseHelper {
 
   Future<void> updateLink(int id, String title, String url, int ordem) async {
     final db = await database;
-    final finalTitle = await verifyTitle(title, 'links');
+    final finalTitle = await verifyTitle(title, 'links', currentId: id);
 
     await db.update(
       'links',
@@ -217,10 +246,9 @@ class DatabaseHelper {
     String desc = '',
   }) async {
     final db = await database;
-    final finalTitle = await verifyTitle(title, 'notes');
 
     await db.insert('notes', {
-      'title': finalTitle,
+      'title': title,
       'desc': desc,
       'idrepository': idRepository,
       'ordem': ordem,
@@ -240,11 +268,10 @@ class DatabaseHelper {
 
   Future<void> updateNote(int id, String title, int ordem) async {
     final db = await database;
-    final finalTitle = await verifyTitle(title, 'notes');
 
     await db.update(
       'notes',
-      {'title': finalTitle, 'ordem': ordem},
+      {'title': title, 'ordem': ordem},
       where: 'id = ?',
       whereArgs: [id],
     );
@@ -316,7 +343,7 @@ class DatabaseHelper {
     int ordem,
   ) async {
     final db = await database;
-    final finalTitle = await verifyTitle(title, 'tasks');
+    final finalTitle = await verifyTitle(title, 'tasks', currentId: id);
 
     String formattedDate = DateFormat('dd/MM/yyyy').format(date);
     await db.update(
@@ -426,39 +453,75 @@ class DatabaseHelper {
     return [...repo, ...all];
   }
 
-  Future<void> setRepoFull(List<Map<String, dynamic>> repoFull) async {
+  Future<String> setRepoFull(List<Map<String, dynamic>> repoFull) async {
     log('Acao iniciada');
     int idRep = 0;
+    bool mesclagem = false;
 
     for (int index = 0; index < repoFull.length; index++) {
       Map<String, dynamic> item = repoFull[index];
       log(item['type']);
       try {
         if (item['type'] == 'repo') {
-          idRep = await insertItem(item['title'], item['subtitle']);
+          idRep = await DatabaseHelper().verifyDuplicate(
+            item['title'],
+            'repository',
+          );
+          if (idRep == -1) {
+            log('novo');
+            idRep = await insertItem(
+              item['title'],
+              item['subtitle'],
+              item['cor'],
+            );
+          } else {
+            mesclagem = true;
+          }
         }
         if (item['type'] == 'link') {
-          await insertLink(item['title'], item['url'], idRep, index);
+          if (!mesclagem ||
+              (await DatabaseHelper().verifyDuplicate(
+                    item['title'],
+                    'links',
+                  )) ==
+                  -1) {
+            await insertLink(item['title'], item['url'], idRep, index);
+          }
         }
         if (item['type'] == 'note') {
-          await insertNote(item['title'], idRep, index, desc: item['desc']);
+          if (!mesclagem ||
+              (await DatabaseHelper().verifyDuplicate(
+                    item['title'],
+                    'notes',
+                  )) ==
+                  -1) {
+            await insertNote(item['title'], idRep, index, desc: item['desc']);
+          }
         }
         if (item['type'] == 'task') {
-          DateTime datafinal = DateFormat(
-            'dd/MM/yyyy',
-          ).parse(item['datafinal']);
-          await insertTask(
-            item['title'],
-            item['desc'],
-            datafinal,
-            idRep,
-            index,
-            estado: item['estado'],
-          );
+          if (!mesclagem ||
+              (await DatabaseHelper().verifyDuplicate(
+                    item['title'],
+                    'tasks',
+                  )) ==
+                  -1) {
+            DateTime datafinal = DateFormat(
+              'dd/MM/yyyy',
+            ).parse(item['datafinal']);
+            await insertTask(
+              item['title'],
+              item['desc'],
+              datafinal,
+              idRep,
+              index,
+              estado: item['estado'],
+            );
+          }
         }
       } catch (e) {
         log('Error: $e');
       }
     }
+    return mesclagem ? 'Repositório mesclado' : 'Repositório importado';
   }
 }

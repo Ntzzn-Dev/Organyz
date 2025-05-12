@@ -7,6 +7,12 @@ import 'themes.dart';
 import 'calendario.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+final ValueNotifier<Color> corPrimaria = ValueNotifier<Color>(
+  Color.fromARGB(255, 11, 3, 80),
+);
+
+bool isDark = false;
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   //await DatabaseHelper().deleteDatabaseFile();
@@ -18,20 +24,25 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      localizationsDelegates: [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [Locale('pt', 'BR')],
-      locale: const Locale('pt', 'BR'),
-      debugShowCheckedModeBanner: false,
-      title: 'Lista de Itens',
-      theme: lighttheme,
-      darkTheme: darktheme,
-      themeMode: ThemeMode.system,
-      home: const HomePage(),
+    return ValueListenableBuilder(
+      valueListenable: corPrimaria,
+      builder: (context, primary, _) {
+        return MaterialApp(
+          localizationsDelegates: [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [Locale('pt', 'BR')],
+          locale: const Locale('pt', 'BR'),
+          debugShowCheckedModeBanner: false,
+          title: 'Lista de Itens',
+          theme: lighttheme(primary),
+          darkTheme: darkTheme(primary),
+          themeMode: ThemeMode.system,
+          home: const HomePage(),
+        );
+      },
     );
   }
 }
@@ -54,22 +65,50 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _loadItems() async {
     items = await DatabaseHelper().getItems();
+    final Brightness brightness =
+        WidgetsBinding.instance.platformDispatcher.platformBrightness;
+
+    if (brightness == Brightness.dark) {
+      isDark = true;
+      corPrimaria.value = Color.fromARGB(255, 243, 160, 34);
+    } else {
+      isDark = false;
+      corPrimaria.value = Color.fromARGB(255, 11, 3, 80);
+    }
+
     setState(() {});
   }
 
-  void _openRepository(String titulo, int id) {
+  void _openRepository(String titulo, String subtitulo, int id, String cor) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => NovaPagina(titulo: titulo, id: id),
+        builder:
+            (context) => Repo(
+              titulo: titulo,
+              subtitulo: subtitulo,
+              id: id,
+              cor: cor,
+              onUpdateRepo: () => _loadItems(),
+            ),
+        settings: RouteSettings(name: 'repository'),
       ),
-    );
+    ).then((_) {
+      if (isDark) {
+        corPrimaria.value = Color.fromARGB(255, 243, 160, 34);
+      } else {
+        corPrimaria.value = Color.fromARGB(255, 11, 3, 80);
+      }
+    });
   }
 
   void _openCalendar() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => CalendarPage()),
+      MaterialPageRoute(
+        builder: (context) => CalendarPage(),
+        settings: RouteSettings(name: 'calendar'),
+      ),
     );
   }
 
@@ -84,15 +123,17 @@ class _HomePageState extends State<HomePage> {
               showCustomPopup(
                 context,
                 'Importar repositório',
-                ['Colar codigo'],
+                [
+                  {'value': 'Colar codigo', 'type': 'text'},
+                ],
                 onConfirm: (valores) async {
-                  await DatabaseHelper().setRepoFull(
+                  final mensagem = await DatabaseHelper().setRepoFull(
                     DatabaseHelper().extractData(valores[0]),
                   );
                   await _loadItems();
-                  await ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Repositório importado')),
-                  );
+                  await ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text(mensagem)));
                 },
               );
             },
@@ -116,11 +157,16 @@ class _HomePageState extends State<HomePage> {
                     showCustomPopup(
                       context,
                       'Adicionar Repositório',
-                      ['Título', 'Subtitulo'],
+                      [
+                        {'value': 'Título', 'type': 'title'},
+                        {'value': 'Subtitulo', 'type': 'text'},
+                        {'value': 'Cor', 'type': 'hex'},
+                      ],
                       onConfirm: (valores) async {
                         await DatabaseHelper().insertItem(
                           valores[0],
                           valores[1],
+                          valores[2],
                         );
                         await _loadItems();
                         await ScaffoldMessenger.of(context).showSnackBar(
@@ -178,7 +224,12 @@ class _HomePageState extends State<HomePage> {
                     });
                   },
                   onPressedCard: () {
-                    _openRepository(items[index]['title'], items[index]['id']);
+                    _openRepository(
+                      items[index]['title'],
+                      items[index]['subtitle'],
+                      items[index]['id'],
+                      items[index]['cor'] ?? '',
+                    );
                   },
                 );
               },

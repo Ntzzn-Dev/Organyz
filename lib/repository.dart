@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:organyz/main.dart';
 import 'itemlist.dart';
 import 'database_helper.dart';
 import 'popup.dart';
@@ -9,33 +10,56 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
 
-class NovaPagina extends StatefulWidget {
+class Repo extends StatefulWidget {
   final String titulo;
+  final String subtitulo;
   final int id;
+  final String? cor;
+  final VoidCallback onUpdateRepo;
 
-  const NovaPagina({super.key, required this.titulo, required this.id});
+  Repo({
+    super.key,
+    required this.titulo,
+    required this.subtitulo,
+    required this.id,
+    this.cor,
+    required this.onUpdateRepo,
+  });
 
   @override
   _repositoryPageState createState() => _repositoryPageState();
 }
 
-class _repositoryPageState extends State<NovaPagina> {
+class _repositoryPageState extends State<Repo> {
   List<Map<String, dynamic>> links = [];
   int ultimaOrdem = 0;
-  late TextEditingController _controller;
-  final String mask = "00/00/0000";
+  late String titulo;
+  late String? cor;
 
   @override
   void initState() {
     super.initState();
+    titulo = widget.titulo;
+    cor = widget.cor;
     _loadItems();
-    _controller = TextEditingController(text: '00/00/0000');
   }
 
   Future<void> _loadItems() async {
     links = await DatabaseHelper().getAllItemsOrdered(widget.id);
     ultimaOrdem = links.length;
     setState(() {});
+
+    if (cor != '') {
+      corPrimaria.value = hexToColor(cor!);
+    }
+  }
+
+  Color hexToColor(String hex) {
+    hex = hex.replaceAll('#', '');
+    if (hex.length == 6) {
+      hex = 'FF$hex';
+    }
+    return Color(int.parse(hex, radix: 16));
   }
 
   @override
@@ -44,7 +68,7 @@ class _repositoryPageState extends State<NovaPagina> {
       appBar: AppBar(
         automaticallyImplyLeading: false,
         title: Text(
-          widget.titulo,
+          titulo,
           style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
         leading: IconButton(
@@ -54,6 +78,46 @@ class _repositoryPageState extends State<NovaPagina> {
           },
         ),
         actions: [
+          ElevatedButton(
+            onPressed: () async {
+              showCustomPopup(
+                context,
+                'Editar Repositorio',
+                [
+                  {'value': 'Título', 'type': 'title', 'id': widget.id},
+                  {'value': 'Subtitulo', 'type': 'text'},
+                  {'value': 'Cor', 'type': 'hex'},
+                ],
+                fieldValues: [widget.titulo, widget.subtitulo, cor!],
+                onConfirm: (valores) async {
+                  log(widget.id.toString());
+                  log(valores[0].toString());
+                  log(valores[1].toString());
+                  log(valores[2].toString());
+                  await DatabaseHelper().updateItem(
+                    widget.id,
+                    valores[0],
+                    valores[1],
+                    valores[2],
+                  );
+                  setState(() {
+                    titulo = valores[0];
+                    cor = valores[2];
+                  });
+                  widget.onUpdateRepo();
+                  await _loadItems();
+                  await ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Repositorio Atualizado')),
+                  );
+                },
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+            ),
+            child: const Icon(Icons.edit),
+          ),
+          SizedBox(width: 5),
           ElevatedButton(
             onPressed: () async {
               Clipboard.setData(
@@ -69,6 +133,7 @@ class _repositoryPageState extends State<NovaPagina> {
             ),
             child: const Icon(Icons.copy),
           ),
+          SizedBox(width: 5),
         ],
       ),
       body: Column(
@@ -84,7 +149,10 @@ class _repositoryPageState extends State<NovaPagina> {
                     showCustomPopup(
                       context,
                       'Adicionar Link',
-                      ['Título', 'Link'],
+                      [
+                        {'value': 'Título', 'type': 'text'},
+                        {'value': 'Link', 'type': 'text'},
+                      ],
                       onConfirm: (valores) async {
                         await DatabaseHelper().insertLink(
                           valores[0],
@@ -116,7 +184,9 @@ class _repositoryPageState extends State<NovaPagina> {
                     showCustomPopup(
                       context,
                       'Adicionar Nota',
-                      ['Título'],
+                      [
+                        {'value': 'Título', 'type': 'text'},
+                      ],
                       onConfirm: (valores) async {
                         await DatabaseHelper().insertNote(
                           valores[0],
@@ -147,7 +217,11 @@ class _repositoryPageState extends State<NovaPagina> {
                     showCustomPopup(
                       context,
                       'Adicionar Tarefa',
-                      ['Título', 'Descrição', 'Data Final'],
+                      [
+                        {'value': 'Título', 'type': 'text'},
+                        {'value': 'Descrição', 'type': 'text'},
+                        {'value': 'Data Final', 'type': 'data'},
+                      ],
                       onConfirm: (valores) async {
                         DateTime date = DateFormat(
                           'dd/MM/yyyy',
@@ -220,8 +294,11 @@ class _repositoryPageState extends State<NovaPagina> {
                     onPressedEdit: () async {
                       showCustomPopup(
                         context,
-                        'Adicionar Link',
-                        ['Título', 'Link'],
+                        'Editar Link',
+                        [
+                          {'value': 'Título', 'type': 'text'},
+                          {'value': 'Link', 'type': 'text'},
+                        ],
                         fieldValues: [item['title'], item['url']],
                         onConfirm: (valores) async {
                           await DatabaseHelper().updateLink(
@@ -281,8 +358,10 @@ class _repositoryPageState extends State<NovaPagina> {
                     onPressedEdit: () async {
                       showCustomPopup(
                         context,
-                        'Adicionar Nota',
-                        ['Título'],
+                        'Editar Nota',
+                        [
+                          {'value': 'Título', 'type': 'text'},
+                        ],
                         fieldValues: [item['title']],
                         onConfirm: (valores) async {
                           await DatabaseHelper().updateNote(
@@ -302,7 +381,10 @@ class _repositoryPageState extends State<NovaPagina> {
                   return ItemExpand(
                     id: index,
                     title: item['title'],
-                    subtitle: item['datafinal'],
+                    subtitle: DateFormat(
+                      "d 'de' MMMM 'de' y",
+                      'pt_BR',
+                    ).format(DateFormat('dd/MM/yyyy').parse(item['datafinal'])),
                     desc: item['desc'],
                     estadoAtual: item['estado'],
                     expandItem: 1,
@@ -347,8 +429,12 @@ class _repositoryPageState extends State<NovaPagina> {
                     onPressedEdit: () async {
                       showCustomPopup(
                         context,
-                        'Adicionar Tarefa',
-                        ['Título', 'Descrição', 'Data Final'],
+                        'Editar Tarefa',
+                        [
+                          {'value': 'Título', 'type': 'text'},
+                          {'value': 'Descrição', 'type': 'text'},
+                          {'value': 'Data Final', 'type': 'data'},
+                        ],
                         fieldValues: [
                           item['title'],
                           item['desc'],
