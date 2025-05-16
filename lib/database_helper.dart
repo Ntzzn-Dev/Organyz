@@ -160,7 +160,7 @@ class DatabaseHelper {
     String title,
     String subtitle,
     String? cor,
-    int? ordem,
+    int ordem,
   ) async {
     final db = await database;
 
@@ -203,6 +203,20 @@ class DatabaseHelper {
         {'ordem': count},
         where: 'id = ?',
         whereArgs: [id],
+      );
+      count++;
+    }
+  }
+
+  Future<void> setOrdemItemsRepo(List<Map<String, dynamic>> items) async {
+    final db = await database;
+    int count = 0;
+    for (Map<String, dynamic> item in items) {
+      await db.update(
+        '${item['type']}s',
+        {'ordem': count},
+        where: 'id = ?',
+        whereArgs: [item['id']],
       );
       count++;
     }

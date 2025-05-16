@@ -85,7 +85,9 @@ class _HomePageState extends State<HomePage> {
             ),
         settings: RouteSettings(name: 'repository'),
       ),
-    );
+    ).then((_) {
+      corPrimaria.value = Color.fromARGB(255, 243, 160, 34);
+    });
   }
 
   void _openCalendar() {

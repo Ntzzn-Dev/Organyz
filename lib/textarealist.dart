@@ -14,7 +14,7 @@ class TextAreaList extends StatelessWidget {
     required this.controller,
     this.label = 'Digite algo...',
     this.minLines = 2,
-    this.maxLines = 5,
+    this.maxLines = 15,
     this.onPressedDel,
     this.onPressedEdit,
     required this.onTextChanged,

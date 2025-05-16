@@ -78,12 +78,15 @@ class _ItemExpandState extends State<ItemExpand> {
         fixedSize: temEstado ? const Size(120, 48) : null,
         backgroundColor: temEstado ? corState : null,
       ),
-      child: Text(
-        temEstado ? nomeState : '▼',
-        style: TextStyle(
-          color: temEstado ? Color.fromARGB(255, 242, 242, 242) : null,
-        ),
-      ),
+      child:
+          temEstado
+              ? Text(
+                nomeState,
+                style: TextStyle(
+                  color: temEstado ? Color.fromARGB(255, 242, 242, 242) : null,
+                ),
+              )
+              : Icon(Icons.link_rounded),
     );
   }
 

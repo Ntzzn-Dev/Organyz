@@ -107,6 +107,7 @@ ThemeData lighttheme(Color corPrimaria) {
         days: Color.fromARGB(255, 0, 0, 0),
         months: Color.fromARGB(255, 190, 144, 84),
         weekends: Color.fromARGB(255, 139, 120, 85),
+        corBase: Color.fromARGB(255, 242, 242, 242),
       ),
     ],
   );
@@ -160,6 +161,7 @@ ThemeData darkTheme(Color corPrimaria) {
       cursorColor: Color.fromARGB(255, 0, 0, 0),
       selectionHandleColor: corPrimaria,
     ),
+
     extensions: <ThemeExtension<dynamic>>[
       CustomColors(
         iniciado: tons['iniciado'] ?? Color.fromARGB(255, 165, 139, 101),
@@ -172,6 +174,7 @@ ThemeData darkTheme(Color corPrimaria) {
         days: Color.fromARGB(255, 214, 214, 214),
         months: Color.fromARGB(255, 190, 144, 84),
         weekends: Color.fromARGB(255, 139, 120, 85),
+        corBase: Color.fromARGB(255, 64, 64, 64),
       ),
     ],
   );
@@ -189,6 +192,7 @@ class CustomColors extends ThemeExtension<CustomColors> {
   final Color days;
   final Color months;
   final Color weekends;
+  final Color corBase;
 
   const CustomColors({
     required this.iniciado,
@@ -201,6 +205,7 @@ class CustomColors extends ThemeExtension<CustomColors> {
     required this.days,
     required this.months,
     required this.weekends,
+    required this.corBase,
   });
 
   @override
@@ -218,6 +223,7 @@ class CustomColors extends ThemeExtension<CustomColors> {
     Color? days,
     Color? months,
     Color? weekends,
+    Color? corBase,
   }) {
     return CustomColors(
       iniciado: iniciado ?? this.iniciado,
@@ -230,6 +236,7 @@ class CustomColors extends ThemeExtension<CustomColors> {
       days: days ?? this.days,
       months: months ?? this.months,
       weekends: weekends ?? this.weekends,
+      corBase: corBase ?? this.corBase,
     );
   }
 
@@ -248,6 +255,7 @@ class CustomColors extends ThemeExtension<CustomColors> {
       days: Color.lerp(days, other.days, t)!,
       months: Color.lerp(months, other.months, t)!,
       weekends: Color.lerp(weekends, other.weekends, t)!,
+      corBase: Color.lerp(corBase, other.corBase, t)!,
     );
   }
 }
