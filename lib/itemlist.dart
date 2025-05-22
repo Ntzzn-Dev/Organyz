@@ -9,9 +9,9 @@ class ItemExpand extends StatefulWidget {
   final int? estadoAtual;
   final VoidCallback? onPressedDel;
   final VoidCallback? onPressedEdit;
-  final VoidCallback? onPressedOpen;
   final VoidCallback? onPressedCard;
   final Widget? doAnything;
+  final Widget? addItems;
   final int? expandItem;
 
   const ItemExpand({
@@ -23,9 +23,9 @@ class ItemExpand extends StatefulWidget {
     this.estadoAtual,
     this.onPressedDel,
     this.onPressedEdit,
-    this.onPressedOpen,
     this.onPressedCard,
     this.doAnything,
+    this.addItems,
     this.expandItem,
   });
 
@@ -38,56 +38,6 @@ class _ItemExpandState extends State<ItemExpand> {
 
   void _toggleValue() {
     isExpandedNotifier.value = !isExpandedNotifier.value;
-  }
-
-  Color get corState {
-    final customColors = Theme.of(context).extension<CustomColors>()!;
-
-    switch (widget.estadoAtual) {
-      case 0:
-        return customColors.iniciado;
-      case 1:
-        return customColors.emAndamento;
-      case 2:
-        return customColors.concluido;
-      default:
-        return const Color.fromARGB(255, 128, 128, 128);
-    }
-  }
-
-  String get nomeState {
-    switch (widget.estadoAtual) {
-      case 0:
-        return 'iniciado';
-      case 1:
-        return 'em andamento';
-      case 2:
-        return 'concluida';
-      default:
-        return 'error';
-    }
-  }
-
-  ElevatedButton acceptButton() {
-    final bool temEstado = widget.estadoAtual != null;
-
-    return ElevatedButton(
-      onPressed: widget.expandItem == 2 ? _toggleValue : widget.onPressedOpen,
-      style: ElevatedButton.styleFrom(
-        padding: const EdgeInsets.all(4),
-        fixedSize: temEstado ? const Size(120, 48) : null,
-        backgroundColor: temEstado ? corState : null,
-      ),
-      child:
-          temEstado
-              ? Text(
-                nomeState,
-                style: TextStyle(
-                  color: temEstado ? Color.fromARGB(255, 242, 242, 242) : null,
-                ),
-              )
-              : Icon(Icons.link_rounded),
-    );
   }
 
   ElevatedButton deleteButton() {
@@ -158,15 +108,10 @@ class _ItemExpandState extends State<ItemExpand> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  widget.onPressedOpen == null
-                      ? const SizedBox.shrink()
-                      : acceptButton(),
-                  const SizedBox(width: 4),
-                  widget.onPressedDel == null || widget.expandItem == 1
-                      ? const SizedBox.shrink()
-                      : deleteButton(),
+                  widget.addItems ?? const SizedBox.shrink(),
                 ],
               ),
+
               ValueListenableBuilder<bool>(
                 valueListenable: isExpandedNotifier,
                 builder: (context, isExpanded, child) {

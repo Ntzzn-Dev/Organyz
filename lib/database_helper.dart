@@ -72,6 +72,28 @@ class DatabaseHelper {
             FOREIGN KEY (idrepository) REFERENCES repository(id) ON DELETE CASCADE
           )
         ''');
+
+        await db.execute('''
+          CREATE TABLE conts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT,
+            qntContMin INTEGER,
+            qntContMax INTEGER,
+            contAtual INTEGER,
+            idrepository INTEGER,
+            ordem INTEGER,
+            FOREIGN KEY (idrepository) REFERENCES repository(id) ON DELETE CASCADE
+          )
+        ''');
+
+        await db.execute('''
+          CREATE TABLE conts_history (
+            idconts INTEGER,
+            direcao TEXT,
+            datadacontagem TEXT,
+            FOREIGN KEY (idconts) REFERENCES conts(id) ON DELETE CASCADE
+          )
+        ''');
       },
     );
   }
@@ -398,6 +420,76 @@ class DatabaseHelper {
     );
   }
 
+  //CONTS =====================================================================
+  Future<List<Map<String, dynamic>>> getCont(int idRepository) async {
+    final db = await database;
+    List<Map<String, dynamic>> result = await db.query(
+      'conts',
+      where: 'idrepository = ?',
+      whereArgs: [idRepository],
+    );
+    return result;
+  }
+
+  Future<void> insertCont(
+    String title,
+    int qntContMin,
+    int qntContMax,
+    int idRepository,
+    int ordem,
+  ) async {
+    final db = await database;
+    final finalTitle = await verifyTitle(title, 'conts');
+
+    await db.insert('conts', {
+      'title': finalTitle,
+      'qntContMin': qntContMin,
+      'qntContMax': qntContMax,
+      'contAtual': qntContMin,
+      'idrepository': idRepository,
+      'ordem': ordem,
+    });
+  }
+
+  Future<void> removeCont(int id) async {
+    final db = await database;
+    await db.delete('conts', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<void> updateCont(
+    int id,
+    String title,
+    int qntContMin,
+    int qntContMax,
+    int ordem,
+  ) async {
+    final db = await database;
+    final finalTitle = await verifyTitle(title, 'conts', currentId: id);
+
+    await db.update(
+      'conts',
+      {
+        'title': finalTitle,
+        'qntContMin': qntContMin,
+        'qntContMax': qntContMax,
+        'ordem': ordem,
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<void> saveCont(int id, int contAtual) async {
+    final db = await database;
+
+    await db.update(
+      'conts',
+      {'contAtual': contAtual},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
   //REPOSITORIO ITENS =========================================================
   Future<List<Map<String, dynamic>>> getAllItemsOrdered(
     int idRepository,
@@ -418,6 +510,12 @@ class DatabaseHelper {
 
     List<Map<String, dynamic>> tasks = await db.query(
       'tasks',
+      where: 'idrepository = ?',
+      whereArgs: [idRepository],
+    );
+
+    List<Map<String, dynamic>> conts = await db.query(
+      'conts',
       where: 'idrepository = ?',
       whereArgs: [idRepository],
     );
@@ -443,7 +541,12 @@ class DatabaseHelper {
           return {...item, 'type': 'task'};
         }).toList();
 
-    List<Map<String, dynamic>> all = [...links, ...notes, ...tasks];
+    conts =
+        conts.map((item) {
+          return {...item, 'type': 'cont'};
+        }).toList();
+
+    List<Map<String, dynamic>> all = [...links, ...notes, ...tasks, ...conts];
 
     all.sort((a, b) => (a['ordem'] as int).compareTo(b['ordem'] as int));
 
@@ -477,6 +580,12 @@ class DatabaseHelper {
       whereArgs: [idRepository],
     );
 
+    List<Map<String, dynamic>> conts = await db.query(
+      'conts',
+      where: 'idrepository = ?',
+      whereArgs: [idRepository],
+    );
+
     repo = repo.map((item) => {...item, 'type': 'repo'}).toList();
 
     links = links.map((item) => {...item, 'type': 'link'}).toList();
@@ -485,7 +594,9 @@ class DatabaseHelper {
 
     tasks = tasks.map((item) => {...item, 'type': 'task'}).toList();
 
-    List<Map<String, dynamic>> all = [...links, ...notes, ...tasks];
+    conts = conts.map((item) => {...item, 'type': 'cont'}).toList();
+
+    List<Map<String, dynamic>> all = [...links, ...notes, ...tasks, ...conts];
 
     all.sort((a, b) => (a['ordem'] as int).compareTo(b['ordem'] as int));
 
@@ -553,6 +664,22 @@ class DatabaseHelper {
               idRep,
               index,
               estado: item['estado'],
+            );
+          }
+        }
+        if (item['type'] == 'cont') {
+          if (!mesclagem ||
+              (await DatabaseHelper().verifyDuplicate(
+                    item['title'],
+                    'conts',
+                  )) ==
+                  -1) {
+            await insertCont(
+              item['title'],
+              item['qntContMin'],
+              item['qntContMax'],
+              idRep,
+              index,
             );
           }
         }

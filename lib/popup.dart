@@ -71,6 +71,10 @@ Future<bool> showCustomPopup(
                             'hex',
                           )
                           ? 2
+                          : fieldLabels[index]['type'].toLowerCase().contains(
+                            'num',
+                          )
+                          ? 3
                           : 0;
 
                   return Padding(
@@ -190,6 +194,23 @@ Future<bool> showCustomPopup(
                                         );
                                       }),
                                     ]
+                                    : tipoFormatacao == 3
+                                    ? [
+                                      TextInputFormatter.withFunction((
+                                        oldValue,
+                                        newValue,
+                                      ) {
+                                        String digitsOnly = newValue.text
+                                            .replaceAll(RegExp(r'[^0-9]'), '');
+
+                                        return TextEditingValue(
+                                          text: digitsOnly,
+                                          selection: TextSelection.collapsed(
+                                            offset: digitsOnly.length,
+                                          ),
+                                        );
+                                      }),
+                                    ]
                                     : [],
                             decoration: InputDecoration(
                               labelText: fieldLabels[index]['value'],
@@ -252,41 +273,21 @@ Future<bool> showCustomPopup(
                   final values =
                       controllers.map((controller) => controller.text).toList();
 
-                  List<int> matchingIndicesData =
-                      fieldLabels
-                          .asMap()
-                          .entries
-                          .where(
-                            (entry) => entry.value['type']
-                                .toLowerCase()
-                                .contains('data'),
-                          )
-                          .map((entry) => entry.key)
-                          .toList();
+                  List<int> matchingIndicesData = [];
+                  List<int> matchingIndicesTitle = [];
+                  List<int> matchingIndicesHex = [];
+                  List<int> matchingIndicesNecessarys = [];
 
-                  List<int> matchingIndicesTitle =
-                      fieldLabels
-                          .asMap()
-                          .entries
-                          .where(
-                            (entry) => entry.value['type']
-                                .toLowerCase()
-                                .contains('title'),
-                          )
-                          .map((entry) => entry.key)
-                          .toList();
+                  for (var entry in fieldLabels.asMap().entries) {
+                    final index = entry.key;
+                    final type = entry.value['type'].toLowerCase();
 
-                  List<int> matchingIndicesHex =
-                      fieldLabels
-                          .asMap()
-                          .entries
-                          .where(
-                            (entry) => entry.value['type']
-                                .toLowerCase()
-                                .contains('hex'),
-                          )
-                          .map((entry) => entry.key)
-                          .toList();
+                    if (type.contains('data')) matchingIndicesData.add(index);
+                    if (type.contains('title')) matchingIndicesTitle.add(index);
+                    if (type.contains('hex')) matchingIndicesHex.add(index);
+                    if (type.contains('necessary'))
+                      matchingIndicesNecessarys.add(index);
+                  }
 
                   bool hasAnyError = false;
 
@@ -319,6 +320,12 @@ Future<bool> showCustomPopup(
                         hasError[i] = true;
                       });
                       hasAnyError = true;
+                    } else if (tituloEscolhido == "" ||
+                        tituloEscolhido.isEmpty) {
+                      setState(() {
+                        hasError[i] = true;
+                      });
+                      hasAnyError = true;
                     } else {
                       setState(() {
                         hasError[i] = false;
@@ -345,6 +352,20 @@ Future<bool> showCustomPopup(
                       RegExp(r'[^0-9a-fA-F]'),
                       '',
                     );
+                  }
+
+                  for (int i in matchingIndicesNecessarys) {
+                    String tituloEscolhido = values[i];
+                    if (tituloEscolhido == "" || tituloEscolhido.isEmpty) {
+                      setState(() {
+                        hasError[i] = true;
+                      });
+                      hasAnyError = true;
+                    } else {
+                      setState(() {
+                        hasError[i] = false;
+                      });
+                    }
                   }
 
                   if (hasAnyError) {

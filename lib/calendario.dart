@@ -93,6 +93,34 @@ class _CalendarPageState extends State<CalendarPage> {
     }
   }
 
+  Color corState(int state) {
+    final customColors = Theme.of(context).extension<CustomColors>()!;
+
+    switch (state) {
+      case 0:
+        return customColors.iniciado;
+      case 1:
+        return customColors.emAndamento;
+      case 2:
+        return customColors.concluido;
+      default:
+        return const Color.fromARGB(255, 128, 128, 128);
+    }
+  }
+
+  String nomeState(int state) {
+    switch (state) {
+      case 0:
+        return 'iniciado';
+      case 1:
+        return 'em andamento';
+      case 2:
+        return 'concluida';
+      default:
+        return 'error';
+    }
+  }
+
   List<Map<String, dynamic>> eventsActual = [];
 
   @override
@@ -252,29 +280,48 @@ class _CalendarPageState extends State<CalendarPage> {
                   subtitle: eventsActual[index]['datafinal'],
                   desc: eventsActual[index]['desc'],
                   estadoAtual: eventsActual[index]['estado'],
-                  onPressedOpen: () async {
-                    int state = eventsActual[index]['estado'];
-                    state++;
+                  addItems: Row(
+                    children: [
+                      ElevatedButton(
+                        onPressed: () async {
+                          int state = eventsActual[index]['estado'];
+                          state++;
 
-                    if (state >= 3) {
-                      state = 0;
+                          if (state >= 3) {
+                            state = 0;
 
-                      bool aceito = await showCustomPopup(
-                        context,
-                        'Reiniciar estado?',
-                        [],
-                      );
-                      if (!aceito) {
-                        return;
-                      }
-                    }
-                    await DatabaseHelper().saveTask(
-                      eventsActual[index]['id'],
-                      state,
-                    );
-                    eventsActual[index]['estado'] = state;
-                    _loadItems();
-                  },
+                            bool aceito = await showCustomPopup(
+                              context,
+                              'Reiniciar estado?',
+                              [],
+                            );
+                            if (!aceito) {
+                              return;
+                            }
+                          }
+                          await DatabaseHelper().saveTask(
+                            eventsActual[index]['id'],
+                            state,
+                          );
+                          eventsActual[index]['estado'] = state;
+                          _loadItems();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.all(4),
+                          fixedSize: const Size(120, 48),
+                          backgroundColor: corState(
+                            eventsActual[index]['estado'],
+                          ),
+                        ),
+                        child: Text(
+                          nomeState(eventsActual[index]['estado']),
+                          style: TextStyle(
+                            color: Color.fromARGB(255, 242, 242, 242),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                   expandItem: 1,
                 );
               },
