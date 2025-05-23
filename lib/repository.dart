@@ -272,7 +272,11 @@ class _repositoryPageState extends State<Repo> {
             {'value': 'Descrição', 'type': 'text'},
             {'value': 'Data Final', 'type': 'data'},
           ],
-          fieldValues: [item['title'], item['desc'], item['datafinal']],
+          fieldValues: [
+            item['title'].replaceFirst(RegExp(r'^\d+\s-\s'), '').trim(),
+            item['desc'],
+            item['datafinal'],
+          ],
           onConfirm: (valores) async {
             DateTime date = DateFormat('dd/MM/yyyy').parse(valores[2]);
             await DatabaseHelper().updateTask(
@@ -353,8 +357,6 @@ class _repositoryPageState extends State<Repo> {
               }
               await DatabaseHelper().saveCont(item['id'], 'Adição', cont);
               _loadItems();
-
-              log(cont.toString());
             },
             child: Icon(Icons.add),
           ),
@@ -381,7 +383,7 @@ class _repositoryPageState extends State<Repo> {
               List<Map<String, dynamic>> history = await DatabaseHelper()
                   .getHistoryCont(item['id']);
 
-              showPopupHistory(context, 'ata', history);
+              showPopupHistory(context, 'Histórico', history);
             },
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -462,10 +464,6 @@ class _repositoryPageState extends State<Repo> {
                 ],
                 fieldValues: [widget.titulo, widget.subtitulo, cor!],
                 onConfirm: (valores) async {
-                  log(widget.id.toString());
-                  log(valores[0].toString());
-                  log(valores[1].toString());
-                  log(valores[2].toString());
                   await DatabaseHelper().updateRepo(
                     widget.id,
                     valores[0],
@@ -605,125 +603,153 @@ class _repositoryPageState extends State<Repo> {
               ),
             ],
           ),
-
-          buildAnimatedButton(270, Icons.public, () async {
-            showCustomPopup(
-              context,
-              'Adicionar Link',
-              [
-                {'value': 'Título', 'type': 'necessary'},
-                {'value': 'Link', 'type': 'text'},
-              ],
-              onConfirm: (valores) async {
-                await DatabaseHelper().insertLink(
-                  valores[0],
-                  valores[1],
-                  widget.id,
-                  ultimaOrdem,
-                );
-                await _loadItems();
-                await ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Link Adicionado')),
-                );
-              },
-            );
-          }),
-          buildAnimatedButton(210, Icons.sticky_note_2, () async {
-            showCustomPopup(
-              context,
-              'Adicionar Nota',
-              [
-                {'value': 'Título', 'type': 'necessary'},
-              ],
-              onConfirm: (valores) async {
-                await DatabaseHelper().insertNote(
-                  valores[0],
-                  widget.id,
-                  ultimaOrdem,
-                );
-                await _loadItems();
-                await ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Nota Adicionada')),
-                );
-              },
-            );
-          }),
-          buildAnimatedButton(150, Icons.task_rounded, () async {
-            showCustomPopup(
-              context,
-              'Adicionar Tarefa',
-              [
-                {'value': 'Título', 'type': 'necessary'},
-                {'value': 'Descrição', 'type': 'text'},
-                {'value': 'Data Final', 'type': 'data'},
-              ],
-              onConfirm: (valores) async {
-                DateTime date = DateFormat('dd/MM/yyyy').parse(valores[2]);
-                await DatabaseHelper().insertTask(
-                  valores[0],
-                  valores[1],
-                  date,
-                  widget.id,
-                  ultimaOrdem,
-                );
-                await _loadItems();
-                await ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Tarefa Adicionada')),
-                );
-              },
-            );
-          }),
-          buildAnimatedButton(90, Icons.plus_one_rounded, () async {
-            showCustomPopup(
-              context,
-              'Adicionar Contagem',
-              [
-                {'value': 'Título', 'type': 'necessary'},
-                {'value': 'Quantidade Mínima', 'type': 'num'},
-                {'value': 'Quantidade Máxima', 'type': 'num'},
-              ],
-              fieldValues: ['', '0', '100'],
-              onConfirm: (valores) async {
-                await DatabaseHelper().insertCont(
-                  valores[0],
-                  int.parse(valores[1]),
-                  int.parse(valores[2]),
-                  widget.id,
-                  ultimaOrdem,
-                );
-                await _loadItems();
-                await ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Link Adicionado')),
-                );
-              },
-            );
-          }),
-          Positioned(
-            bottom: 20,
-            right: 20,
-            child: Container(
-              width: 60,
-              height: 60,
-              decoration: BoxDecoration(
-                color: Theme.of(context).extension<CustomColors>()!.concluido,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 6,
-                    offset: Offset(2, 2),
+          Stack(
+            children: [
+              if (showButtons)
+                Positioned.fill(
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        showButtons = false;
+                      });
+                    },
+                    child: Container(color: Colors.transparent),
                   ),
-                ],
+                ),
+
+              buildAnimatedButton(270, Icons.public, () async {
+                showCustomPopup(
+                  context,
+                  'Adicionar Link',
+                  [
+                    {'value': 'Título', 'type': 'necessary'},
+                    {'value': 'Link', 'type': 'text'},
+                  ],
+                  onConfirm: (valores) async {
+                    await DatabaseHelper().insertLink(
+                      valores[0],
+                      valores[1],
+                      widget.id,
+                      ultimaOrdem,
+                    );
+                    await _loadItems();
+                    await ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Link Adicionado')),
+                    );
+                    setState(() {
+                      showButtons = false;
+                    });
+                  },
+                );
+              }),
+              buildAnimatedButton(210, Icons.sticky_note_2, () async {
+                showCustomPopup(
+                  context,
+                  'Adicionar Nota',
+                  [
+                    {'value': 'Título', 'type': 'necessary'},
+                  ],
+                  onConfirm: (valores) async {
+                    await DatabaseHelper().insertNote(
+                      valores[0],
+                      widget.id,
+                      ultimaOrdem,
+                    );
+                    await _loadItems();
+                    await ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Nota Adicionada')),
+                    );
+                    setState(() {
+                      showButtons = false;
+                    });
+                  },
+                );
+              }),
+              buildAnimatedButton(150, Icons.task_rounded, () async {
+                showCustomPopup(
+                  context,
+                  'Adicionar Tarefa',
+                  [
+                    {'value': 'Título', 'type': 'necessary'},
+                    {'value': 'Descrição', 'type': 'text'},
+                    {'value': 'Data Final', 'type': 'data'},
+                  ],
+                  onConfirm: (valores) async {
+                    DateTime date = DateFormat('dd/MM/yyyy').parse(valores[2]);
+                    await DatabaseHelper().insertTask(
+                      valores[0],
+                      valores[1],
+                      date,
+                      widget.id,
+                      ultimaOrdem,
+                    );
+                    await _loadItems();
+                    await ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Tarefa Adicionada')),
+                    );
+                    setState(() {
+                      showButtons = false;
+                    });
+                  },
+                );
+              }),
+              buildAnimatedButton(90, Icons.plus_one_rounded, () async {
+                showCustomPopup(
+                  context,
+                  'Adicionar Contagem',
+                  [
+                    {'value': 'Título', 'type': 'necessary'},
+                    {'value': 'Quantidade Mínima', 'type': 'num'},
+                    {'value': 'Quantidade Máxima', 'type': 'num'},
+                  ],
+                  fieldValues: ['', '0', '100'],
+                  onConfirm: (valores) async {
+                    await DatabaseHelper().insertCont(
+                      valores[0],
+                      int.parse(valores[1]),
+                      int.parse(valores[2]),
+                      widget.id,
+                      ultimaOrdem,
+                    );
+                    await _loadItems();
+                    await ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Link Adicionado')),
+                    );
+                    setState(() {
+                      showButtons = false;
+                    });
+                  },
+                );
+              }),
+              Positioned(
+                bottom: 20,
+                right: 20,
+                child: Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color:
+                        Theme.of(context).extension<CustomColors>()!.concluido,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 6,
+                        offset: Offset(2, 2),
+                      ),
+                    ],
+                  ),
+                  child: IconButton(
+                    icon: Icon(Icons.add, color: Colors.white),
+                    onPressed: () {
+                      setState(() {
+                        showButtons = !showButtons;
+                      });
+                    },
+                  ),
+                ),
               ),
-              child: IconButton(
-                icon: Icon(Icons.add, color: Colors.white),
-                onPressed: () {
-                  setState(() {
-                    showButtons = !showButtons;
-                  });
-                },
-              ),
-            ),
+            ],
           ),
         ],
       ),

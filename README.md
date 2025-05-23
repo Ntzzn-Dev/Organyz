@@ -31,3 +31,7 @@ Log:
     Otimização na classe repository.  
     Adição do popup do histórico.  
     Correção do horário das alterações na contagem para distancias de tempo.  
+  version 6.2:  
+    Criação da hierarquia de Tarefas, onde elas são marcadas em ordem crescente de acordo com a data final.  
+    Correção da falta de mesclagem por diferenças em espaço.  
+    Agora os botões de adição são fechados, se o usúario não usa-los.  

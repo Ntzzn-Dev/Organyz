@@ -156,7 +156,7 @@ class DatabaseHelper {
 
     final result = await db.query(
       table,
-      where: 'title = ? AND id != ?',
+      where: 'TRIM(title) = ? AND id != ?',
       whereArgs: [title, currentId ?? -1],
       limit: 1,
     );
@@ -359,6 +359,73 @@ class DatabaseHelper {
     return result;
   }
 
+  Future<List<Map<String, dynamic>>> getTasksByTitle(
+    String title,
+    int id,
+  ) async {
+    final db = await database;
+    title = title.replaceFirst(RegExp(r'^\d+\s-\s'), '').trim();
+    List<Map<String, dynamic>> result = await db.query(
+      'tasks',
+      where: 'title LIKE ? AND id != ?',
+      whereArgs: ['%$title', id],
+    );
+
+    result =
+        result.map((item) {
+          return {...item};
+        }).toList();
+
+    for (Map<String, dynamic> task in result) {
+      String datafinalStr = task['datafinal'];
+      DateTime datafinal = DateFormat('dd/MM/yyyy').parse(datafinalStr);
+      String formattedDate = DateFormat('dd/MM/yyyy').format(datafinal);
+      task['datafinal'] = formattedDate;
+    }
+
+    return result;
+  }
+
+  Future<List<Map<String, dynamic>>> ordTasks(
+    String title,
+    DateTime data, {
+    int? id,
+  }) async {
+    List<Map<String, dynamic>> result = await DatabaseHelper().getTasksByTitle(
+      title,
+      id ?? -1,
+    );
+
+    List<Map<String, dynamic>> newOrd = [];
+
+    for (var item in result) {
+      newOrd.add({
+        'title': item['title'],
+        'data': DateFormat('dd/MM/yyyy').parse(item['datafinal']),
+        'id': item['id'],
+      });
+    }
+
+    newOrd.add({'title': title, 'data': data, 'id': -1});
+
+    newOrd.sort(
+      (a, b) => (a['data'] as DateTime).compareTo(b['data'] as DateTime),
+    );
+
+    return newOrd;
+  }
+
+  Future<void> reordTasks(String title, int id) async {
+    final db = await database;
+
+    await db.update(
+      'tasks',
+      {'title': title},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
   Future<void> insertTask(
     String title,
     String desc,
@@ -368,11 +435,24 @@ class DatabaseHelper {
     int estado = 0,
   }) async {
     final db = await database;
-    final finalTitle = await verifyTitle(title, 'tasks');
+    List<Map<String, dynamic>> lista = await ordTasks(title, date);
+
+    for (Map<String, dynamic> task in lista) {
+      int pos = lista.indexWhere((item) => item['id'] == task['id']);
+      reordTasks(
+        '${pos + 1} - ${task['title'].replaceFirst(RegExp(r'^\d+\s-\s'), '')}',
+        task['id'],
+      );
+    }
+
+    String pos =
+        lista.length == 1
+            ? ''
+            : '${(lista.indexWhere((item) => item['id'] == -1) + 1).toString()} - ';
 
     String formattedDate = DateFormat('dd/MM/yyyy').format(date);
     await db.insert('tasks', {
-      'title': finalTitle,
+      'title': '$pos$title',
       'desc': desc,
       'datafinal': formattedDate,
       'estado': estado,
@@ -405,13 +485,29 @@ class DatabaseHelper {
     int ordem,
   ) async {
     final db = await database;
-    final finalTitle = await verifyTitle(title, 'tasks', currentId: id);
+
+    List<Map<String, dynamic>> lista = await ordTasks(title, date, id: id);
+
+    for (Map<String, dynamic> task in lista) {
+      int pos = lista.indexWhere((item) => item['id'] == task['id']);
+      if (task['id'] != id) {
+        reordTasks(
+          '${pos + 1} - ${task['title'].replaceFirst(RegExp(r'^\d+\s-\s'), '')}',
+          task['id'],
+        );
+      }
+    }
+
+    String pos =
+        lista.length == 1
+            ? ''
+            : '${(lista.indexWhere((item) => item['id'] == -1) + 1).toString()} - ';
 
     String formattedDate = DateFormat('dd/MM/yyyy').format(date);
     await db.update(
       'tasks',
       {
-        'title': finalTitle,
+        'title': '$pos$title',
         'desc': desc,
         'datafinal': formattedDate,
         'ordem': ordem,
@@ -509,7 +605,6 @@ class DatabaseHelper {
   }
 
   Future<void> restartCont(int id, int minCont) async {
-    log('ahaha');
     final db = await database;
     await db.delete('conts_history', where: 'idconts = ?', whereArgs: [id]);
     await db.update(
