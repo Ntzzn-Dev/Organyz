@@ -89,6 +89,7 @@ class DatabaseHelper {
         await db.execute('''
           CREATE TABLE conts_history (
             idconts INTEGER,
+            contAtual INTEGER,
             direcao TEXT,
             datadacontagem TEXT,
             FOREIGN KEY (idconts) REFERENCES conts(id) ON DELETE CASCADE
@@ -461,6 +462,7 @@ class DatabaseHelper {
     String title,
     int qntContMin,
     int qntContMax,
+    int contAtual,
     int ordem,
   ) async {
     final db = await database;
@@ -472,6 +474,7 @@ class DatabaseHelper {
         'title': finalTitle,
         'qntContMin': qntContMin,
         'qntContMax': qntContMax,
+        'contAtual': contAtual,
         'ordem': ordem,
       },
       where: 'id = ?',
@@ -479,7 +482,7 @@ class DatabaseHelper {
     );
   }
 
-  Future<void> saveCont(int id, int contAtual) async {
+  Future<void> saveCont(int id, String direcao, int contAtual) async {
     final db = await database;
 
     await db.update(
@@ -488,6 +491,72 @@ class DatabaseHelper {
       where: 'id = ?',
       whereArgs: [id],
     );
+
+    plusCont(id, direcao, contAtual);
+  }
+
+  Future<void> plusCont(int id, String direcao, int contAtual) async {
+    final db = await database;
+
+    await db.insert('conts_history', {
+      'idconts': id,
+      'direcao': direcao,
+      'contAtual': contAtual,
+      'datadacontagem': DateFormat(
+        'dd/MM/yyyy HH:mm:ss',
+      ).format(DateTime.now()),
+    });
+  }
+
+  Future<void> restartCont(int id, int minCont) async {
+    log('ahaha');
+    final db = await database;
+    await db.delete('conts_history', where: 'idconts = ?', whereArgs: [id]);
+    await db.update(
+      'conts',
+      {'contAtual': minCont},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> getHistoryCont(int idconts) async {
+    final db = await database;
+
+    List<Map<String, dynamic>> result = await db.query(
+      'conts_history',
+      where: 'idconts = ?',
+      whereArgs: [idconts],
+    );
+
+    List<DateTime> datas =
+        result.map((e) {
+          return DateFormat('dd/MM/yyyy HH:mm:ss').parse(e['datadacontagem']);
+        }).toList();
+
+    List<String> diferencas = [];
+
+    for (int i = 0; i < datas.length; i++) {
+      if (i == 0) {
+        diferencas.add('Início');
+      } else {
+        final diff = datas[i].difference(datas[i - 1]);
+        String formatada = [
+          diff.inHours.toString().padLeft(2, '0'),
+          (diff.inMinutes % 60).toString().padLeft(2, '0'),
+          (diff.inSeconds % 60).toString().padLeft(2, '0'),
+        ].join(':');
+        diferencas.add(formatada);
+      }
+    }
+
+    List<Map<String, dynamic>> novaLista = [];
+
+    for (int i = 0; i < result.length; i++) {
+      novaLista.add({...result[i], 'datadacontagem': diferencas[i]});
+    }
+
+    return novaLista;
   }
 
   //REPOSITORIO ITENS =========================================================

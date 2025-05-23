@@ -1,39 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:organyz/themes.dart';
 
-class ItemExpand extends StatefulWidget {
+class ItemList extends StatefulWidget {
   final int id;
   final String title;
   final String subtitle;
+  final String type;
   final String? desc;
-  final int? estadoAtual;
   final VoidCallback? onPressedDel;
   final VoidCallback? onPressedEdit;
   final VoidCallback? onPressedCard;
-  final Widget? doAnything;
-  final Widget? addItems;
-  final int? expandItem;
+  final Widget? doAnythingDown;
+  final Widget? doAnythingUp;
 
-  const ItemExpand({
+  const ItemList({
     super.key,
     required this.id,
     required this.title,
     required this.subtitle,
+    required this.type,
     this.desc,
-    this.estadoAtual,
     this.onPressedDel,
     this.onPressedEdit,
     this.onPressedCard,
-    this.doAnything,
-    this.addItems,
-    this.expandItem,
+    this.doAnythingDown,
+    this.doAnythingUp,
   });
 
   @override
-  State<ItemExpand> createState() => _ItemExpandState();
+  State<ItemList> createState() => _ItemListState();
 }
 
-class _ItemExpandState extends State<ItemExpand> {
+class _ItemListState extends State<ItemList> {
   ValueNotifier<bool> isExpandedNotifier = ValueNotifier<bool>(false);
 
   void _toggleValue() {
@@ -67,7 +65,7 @@ class _ItemExpandState extends State<ItemExpand> {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: widget.expandItem == 1 ? _toggleValue : widget.onPressedCard,
+      onTap: widget.type == 'repo' ? widget.onPressedCard : _toggleValue,
       child: Card(
         margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -96,10 +94,17 @@ class _ItemExpandState extends State<ItemExpand> {
                         const SizedBox(height: 8),
                         Text(
                           widget.subtitle,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey,
-                          ),
+                          style:
+                              widget.type == 'cont'
+                                  ? const TextStyle(
+                                    fontSize: 18,
+                                    color: Color.fromARGB(255, 36, 36, 36),
+                                    fontWeight: FontWeight.w800,
+                                  )
+                                  : const TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey,
+                                  ),
                           softWrap: true,
                           overflow: TextOverflow.ellipsis,
                           maxLines: 3,
@@ -108,7 +113,7 @@ class _ItemExpandState extends State<ItemExpand> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  widget.addItems ?? const SizedBox.shrink(),
+                  widget.doAnythingUp ?? const SizedBox.shrink(),
                 ],
               ),
 
@@ -121,7 +126,7 @@ class _ItemExpandState extends State<ItemExpand> {
                     alignment: Alignment.topRight,
                     child:
                         isExpanded &&
-                                (widget.desc != null || widget.expandItem == 1)
+                                (widget.desc != null || widget.type != 'repo')
                             ? Container(
                               width: double.infinity,
                               padding: const EdgeInsets.symmetric(
@@ -138,14 +143,14 @@ class _ItemExpandState extends State<ItemExpand> {
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceBetween,
                                     children: [
-                                      widget.doAnything ??
+                                      widget.doAnythingDown ??
                                           const SizedBox.shrink(),
                                       Row(
                                         children: [
                                           editButton(),
                                           const SizedBox(width: 4),
-                                          if (widget.expandItem == 1)
-                                            deleteButton(),
+
+                                          deleteButton(),
                                         ],
                                       ),
                                     ],

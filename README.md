@@ -22,4 +22,12 @@ Log:
     Criação do contador.  
     Correção da criação de itens vazios.  
     Correção dos filtros, para evitar tamanho grande demais.  
-    Atualização do itemlist, onde não há mais o onPressedOpen para um botão pré-definido com ações diferentes, agora uma row com quantos itens ou botões for necessário.  
+    Atualização do itemList, onde não há mais o onPressedOpen para um botão pré-definido com ações diferentes, agora uma row com quantos itens ou botões for necessário.  
+  version 6.1:  
+    Atualização do itemList, retirada de duas variaveis desnecessárias, adição de tipagem.  
+    Criação do histórico de contagem, tanto para adição, subtração e reinício.  
+    Correção para a edição e delete de um cont.  
+    Mudança de minimo e máximo mantendo o valor atual dentro do intervalo.  
+    Otimização na classe repository.  
+    Adição do popup do histórico.  
+    Correção do horário das alterações na contagem para distancias de tempo.  

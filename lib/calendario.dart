@@ -274,13 +274,13 @@ class _CalendarPageState extends State<CalendarPage> {
             child: ListView.builder(
               itemCount: eventsActual.length,
               itemBuilder: (context, index) {
-                return ItemExpand(
+                return ItemList(
                   id: index,
+                  type: 'task',
                   title: eventsActual[index]['title'],
                   subtitle: eventsActual[index]['datafinal'],
                   desc: eventsActual[index]['desc'],
-                  estadoAtual: eventsActual[index]['estado'],
-                  addItems: Row(
+                  doAnythingUp: Row(
                     children: [
                       ElevatedButton(
                         onPressed: () async {
@@ -322,7 +322,6 @@ class _CalendarPageState extends State<CalendarPage> {
                       ),
                     ],
                   ),
-                  expandItem: 1,
                 );
               },
             ),

@@ -14,8 +14,6 @@ final ValueNotifier<Color> corPrimaria = ValueNotifier<Color>(
   Color.fromARGB(255, 243, 160, 34),
 );
 
-bool isDark = false;
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   //await DatabaseHelper().deleteDatabaseFile();
@@ -253,12 +251,13 @@ class _HomePageState extends State<HomePage> {
               },
               children: [
                 for (int index = 0; index < items.length; index++)
-                  ItemExpand(
+                  ItemList(
                     key: ValueKey(items[index]['id']),
                     title: items[index]['title'],
                     id: index,
+                    type: 'repo',
                     subtitle: items[index]['subtitle'],
-                    addItems: Row(
+                    doAnythingUp: Row(
                       children: [
                         ElevatedButton(
                           onPressed: () async {

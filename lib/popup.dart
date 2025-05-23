@@ -41,10 +41,10 @@ Future<bool> showCustomPopup(
         String cleaned = fieldValues[index].replaceAll('#', '').trim();
         return Color(int.parse('0xFF$cleaned'));
       } catch (_) {
-        return Color.fromARGB(255, 255, 255, 255); // Cor padrão se erro
+        return Color.fromARGB(255, 255, 255, 255);
       }
     } else {
-      return Color.fromARGB(255, 255, 255, 255); // Cor padrão
+      return Color.fromARGB(255, 255, 255, 255);
     }
   });
 

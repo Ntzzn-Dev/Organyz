@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:organyz/main.dart';
+import 'package:organyz/popuphistory.dart';
 import 'package:organyz/themes.dart';
 import 'itemlist.dart';
 import 'database_helper.dart';
@@ -32,7 +33,7 @@ class Repo extends StatefulWidget {
 }
 
 class _repositoryPageState extends State<Repo> {
-  List<Map<String, dynamic>> links = [];
+  List<Map<String, dynamic>> itens = [];
   int ultimaOrdem = 0;
   late String titulo;
   late String? cor;
@@ -48,8 +49,8 @@ class _repositoryPageState extends State<Repo> {
   }
 
   Future<void> _loadItems() async {
-    links = await DatabaseHelper().getAllItemsOrdered(widget.id);
-    ultimaOrdem = links.length;
+    itens = await DatabaseHelper().getAllItemsOrdered(widget.id);
+    ultimaOrdem = itens.length;
     setState(() {});
 
     if (cor != '') {
@@ -91,6 +92,346 @@ class _repositoryPageState extends State<Repo> {
       default:
         return 'error';
     }
+  }
+
+  Widget linksCreate(Map<String, dynamic> item, int index) {
+    return ItemList(
+      key: ValueKey([item['id'], item['title']]),
+      title: item['title'],
+      id: index,
+      type: item['type'],
+      subtitle: item['url'],
+      onPressedDel: () async {
+        bool aceito = await showCustomPopup(context, 'Deletar link?', []);
+        if (!aceito) {
+          return;
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Item deletado: ${item['title']}')),
+        );
+        await DatabaseHelper().removeLink(item['id']);
+        await _loadItems();
+      },
+      doAnythingUp: Row(
+        children: [
+          ElevatedButton(
+            onPressed: () async {
+              final url = Uri.parse(item['url']);
+
+              launchUrl(url, mode: LaunchMode.externalApplication);
+            },
+            style: ElevatedButton.styleFrom(padding: const EdgeInsets.all(4)),
+            child: Icon(Icons.link_rounded),
+          ),
+        ],
+      ),
+      onPressedEdit: () async {
+        showCustomPopup(
+          context,
+          'Editar Link',
+          [
+            {'value': 'Título', 'type': 'necessary'},
+            {'value': 'Link', 'type': 'text'},
+          ],
+          fieldValues: [item['title'], item['url']],
+          onConfirm: (valores) async {
+            await DatabaseHelper().updateLink(
+              item['id'],
+              valores[0],
+              valores[1],
+              item['ordem'],
+            );
+            await _loadItems();
+            await ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text('Link Atualizado')));
+          },
+        );
+      },
+      doAnythingDown: ElevatedButton(
+        onPressed: () async {
+          Clipboard.setData(ClipboardData(text: item['url']));
+        },
+        style: ElevatedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        ),
+        child: Icon(Icons.copy),
+      ),
+    );
+  }
+
+  Widget notesCreate(Map<String, dynamic> item, int index) {
+    return TextAreaList(
+      key: ValueKey([item['id'], item['title']]),
+      label: item['title'],
+      controller: item['controller'],
+      onPressedDel: () async {
+        bool aceito = await showCustomPopup(context, 'Deletar nota?', []);
+        if (!aceito) {
+          return;
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Item deletado: ${item['title']}')),
+        );
+        setState(() {
+          DatabaseHelper().removeNote(item['id']);
+          _loadItems();
+        });
+      },
+      onTextChanged: (text) {
+        DatabaseHelper().saveNote(item['id'], text);
+      },
+      onPressedEdit: () async {
+        showCustomPopup(
+          context,
+          'Editar Nota',
+          [
+            {'value': 'Título', 'type': 'necessary'},
+          ],
+          fieldValues: [item['title']],
+          onConfirm: (valores) async {
+            await DatabaseHelper().updateNote(
+              item['id'],
+              valores[0],
+              item['ordem'],
+            );
+            await _loadItems();
+            await ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text('Nota Atualizada')));
+          },
+        );
+      },
+    );
+  }
+
+  Widget tasksCreate(Map<String, dynamic> item, int index) {
+    return ItemList(
+      key: ValueKey([item['id'], item['title']]),
+      id: index,
+      title: item['title'],
+      type: item['type'],
+      subtitle: DateFormat(
+        "d 'de' MMMM 'de' y",
+        'pt_BR',
+      ).format(DateFormat('dd/MM/yyyy').parse(item['datafinal'])),
+      desc: item['desc'],
+      onPressedDel: () async {
+        bool aceito = await showCustomPopup(context, 'Deletar tarefa?', []);
+        if (!aceito) {
+          return;
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Item deletado: ${item['title']}')),
+        );
+        setState(() {
+          DatabaseHelper().removeTask(item['id']);
+          _loadItems();
+        });
+      },
+      doAnythingUp: Row(
+        children: [
+          ElevatedButton(
+            onPressed: () async {
+              int state = item['estado'];
+              state++;
+
+              if (state >= 3) {
+                state = 0;
+
+                bool aceito = await showCustomPopup(
+                  context,
+                  'Reiniciar estado?',
+                  [],
+                );
+                if (!aceito) {
+                  return;
+                }
+              }
+              await DatabaseHelper().saveTask(item['id'], state);
+              _loadItems();
+            },
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.all(4),
+              fixedSize: const Size(120, 48),
+              backgroundColor: corState(item['estado']),
+            ),
+            child: Text(
+              nomeState(item['estado']),
+              style: TextStyle(color: Color.fromARGB(255, 242, 242, 242)),
+            ),
+          ),
+        ],
+      ),
+      onPressedEdit: () async {
+        showCustomPopup(
+          context,
+          'Editar Tarefa',
+          [
+            {'value': 'Título', 'type': 'necessary'},
+            {'value': 'Descrição', 'type': 'text'},
+            {'value': 'Data Final', 'type': 'data'},
+          ],
+          fieldValues: [item['title'], item['desc'], item['datafinal']],
+          onConfirm: (valores) async {
+            DateTime date = DateFormat('dd/MM/yyyy').parse(valores[2]);
+            await DatabaseHelper().updateTask(
+              item['id'],
+              valores[0],
+              valores[1],
+              date,
+              item['ordem'],
+            );
+            await _loadItems();
+            await ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text('Tarefa Atualizada')));
+          },
+        );
+      },
+    );
+  }
+
+  Widget contsCreate(Map<String, dynamic> item, int index) {
+    return ItemList(
+      key: ValueKey([item['id'], item['title']]),
+      id: index,
+      title: item['title'],
+      type: item['type'],
+      subtitle: item['contAtual'].toString(),
+      onPressedDel: () async {
+        bool aceito = await showCustomPopup(context, 'Deletar contagem?', []);
+        if (!aceito) {
+          return;
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Item deletado: ${item['title']}')),
+        );
+        setState(() {
+          DatabaseHelper().removeCont(item['id']);
+          _loadItems();
+        });
+      },
+      doAnythingUp: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          ElevatedButton(
+            onPressed: () async {
+              int cont = item['contAtual'];
+
+              if (cont > item['qntContMin']) {
+                cont--;
+              }
+
+              await DatabaseHelper().saveCont(item['id'], 'Subtração', cont);
+              _loadItems();
+            },
+            child: Icon(Icons.remove),
+          ),
+          const SizedBox(width: 4),
+          ElevatedButton(
+            onPressed: () async {
+              int cont = item['contAtual'];
+              cont++;
+
+              if (cont > item['qntContMax']) {
+                cont = item['qntContMin'];
+
+                bool aceito = await showCustomPopup(
+                  context,
+                  'Reiniciar contagem?',
+                  [],
+                );
+                if (!aceito) {
+                  return;
+                } else {
+                  await DatabaseHelper().restartCont(
+                    item['id'],
+                    item['qntContMin'],
+                  );
+                }
+              }
+              await DatabaseHelper().saveCont(item['id'], 'Adição', cont);
+              _loadItems();
+
+              log(cont.toString());
+            },
+            child: Icon(Icons.add),
+          ),
+        ],
+      ),
+      doAnythingDown: Row(
+        children: [
+          ElevatedButton(
+            onPressed: () async {
+              await DatabaseHelper().restartCont(
+                item['id'],
+                item['qntContMin'],
+              );
+              _loadItems();
+            },
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
+            child: Icon(Icons.refresh_rounded),
+          ),
+          const SizedBox(width: 4),
+          ElevatedButton(
+            onPressed: () async {
+              List<Map<String, dynamic>> history = await DatabaseHelper()
+                  .getHistoryCont(item['id']);
+
+              showPopupHistory(context, 'ata', history);
+            },
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
+            child: Icon(Icons.history),
+          ),
+        ],
+      ),
+      onPressedEdit: () async {
+        showCustomPopup(
+          context,
+          'Editar Contagem',
+          [
+            {'value': 'Título', 'type': 'necessary'},
+            {'value': 'Quantidade Mínima', 'type': 'num'},
+            {'value': 'Quantidade Máxima', 'type': 'num'},
+          ],
+          fieldValues: [
+            item['title'],
+            item['qntContMin'].toString(),
+            item['qntContMax'].toString(),
+          ],
+          onConfirm: (valores) async {
+            int contAtual = item['contAtual'];
+            int contMin = int.parse(valores[1]);
+            int contMax = int.parse(valores[2]);
+
+            contAtual =
+                contAtual < contMin
+                    ? contMin
+                    : contAtual > contMax
+                    ? contMax
+                    : contAtual;
+
+            await DatabaseHelper().updateCont(
+              item['id'],
+              valores[0],
+              contMin,
+              contMax,
+              contAtual,
+              item['ordem'],
+            );
+            await _loadItems();
+            await ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Contagem Atualizada')),
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -183,32 +524,32 @@ class _repositoryPageState extends State<Repo> {
                   [
                     () async {
                       await _loadItems();
-                      links =
-                          links
+                      itens =
+                          itens
                               .where((item) => item['type'] == 'link')
                               .toList();
                       setState(() {});
                     },
                     () async {
                       await _loadItems();
-                      links =
-                          links
+                      itens =
+                          itens
                               .where((item) => item['type'] == 'note')
                               .toList();
                       setState(() {});
                     },
                     () async {
                       await _loadItems();
-                      links =
-                          links
+                      itens =
+                          itens
                               .where((item) => item['type'] == 'task')
                               .toList();
                       setState(() {});
                     },
                     () async {
                       await _loadItems();
-                      links =
-                          links
+                      itens =
+                          itens
                               .where((item) => item['type'] == 'cont')
                               .toList();
                       setState(() {});
@@ -220,7 +561,7 @@ class _repositoryPageState extends State<Repo> {
                 child: ReorderableListView(
                   onReorder: (oldIndex, newIndex) async {
                     List<Map<String, dynamic>> modifiableItems =
-                        links
+                        itens
                             .map((item) => Map<String, dynamic>.from(item))
                             .toList();
 
@@ -230,7 +571,7 @@ class _repositoryPageState extends State<Repo> {
                     modifiableItems.insert(newIndex, item);
 
                     setState(() {
-                      links = modifiableItems;
+                      itens = modifiableItems;
                     });
 
                     //Salva a ordem apenas se os filtros estiverem desativados
@@ -241,404 +582,21 @@ class _repositoryPageState extends State<Repo> {
                         : null;
                   },
                   children: [
-                    for (int index = 0; index < links.length; index++) ...[
+                    for (int index = 0; index < itens.length; index++) ...[
                       (() {
-                        final item = links[index];
+                        final item = itens[index];
 
-                        if (item['type'] == 'link') {
-                          return ItemExpand(
-                            key: ValueKey([item['id'], item['title']]),
-                            title: item['title'],
-                            id: index,
-                            subtitle: item['url'],
-                            expandItem: 1,
-                            onPressedDel: () async {
-                              bool aceito = await showCustomPopup(
-                                context,
-                                'Deletar link?',
-                                [],
-                              );
-                              if (!aceito) {
-                                return;
-                              }
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'Item deletado: ${item['title']}',
-                                  ),
-                                ),
-                              );
-                              await DatabaseHelper().removeLink(item['id']);
-                              await _loadItems();
-                            },
-                            addItems: Row(
-                              children: [
-                                ElevatedButton(
-                                  onPressed: () async {
-                                    final url = Uri.parse(item['url']);
-
-                                    launchUrl(
-                                      url,
-                                      mode: LaunchMode.externalApplication,
-                                    );
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    padding: const EdgeInsets.all(4),
-                                  ),
-                                  child: Icon(Icons.link_rounded),
-                                ),
-                              ],
-                            ),
-                            onPressedEdit: () async {
-                              showCustomPopup(
-                                context,
-                                'Editar Link',
-                                [
-                                  {'value': 'Título', 'type': 'necessary'},
-                                  {'value': 'Link', 'type': 'text'},
-                                ],
-                                fieldValues: [item['title'], item['url']],
-                                onConfirm: (valores) async {
-                                  await DatabaseHelper().updateLink(
-                                    item['id'],
-                                    valores[0],
-                                    valores[1],
-                                    item['ordem'],
-                                  );
-                                  await _loadItems();
-                                  await ScaffoldMessenger.of(
-                                    context,
-                                  ).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Link Atualizado'),
-                                    ),
-                                  );
-                                },
-                              );
-                            },
-                            doAnything: ElevatedButton(
-                              onPressed: () async {
-                                Clipboard.setData(
-                                  ClipboardData(text: item['url']),
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 12,
-                                ),
-                              ),
-                              child: Icon(Icons.copy),
-                            ),
-                          );
-                        } else if (item['type'] == 'note') {
-                          return TextAreaList(
-                            key: ValueKey([item['id'], item['title']]),
-                            label: item['title'],
-                            controller: item['controller'],
-                            onPressedDel: () async {
-                              bool aceito = await showCustomPopup(
-                                context,
-                                'Deletar nota?',
-                                [],
-                              );
-                              if (!aceito) {
-                                return;
-                              }
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'Item deletado: ${item['title']}',
-                                  ),
-                                ),
-                              );
-                              setState(() {
-                                DatabaseHelper().removeNote(item['id']);
-                                _loadItems();
-                              });
-                            },
-                            onTextChanged: (text) {
-                              DatabaseHelper().saveNote(item['id'], text);
-                            },
-                            onPressedEdit: () async {
-                              showCustomPopup(
-                                context,
-                                'Editar Nota',
-                                [
-                                  {'value': 'Título', 'type': 'necessary'},
-                                ],
-                                fieldValues: [item['title']],
-                                onConfirm: (valores) async {
-                                  await DatabaseHelper().updateNote(
-                                    item['id'],
-                                    valores[0],
-                                    item['ordem'],
-                                  );
-                                  await _loadItems();
-                                  await ScaffoldMessenger.of(
-                                    context,
-                                  ).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Nota Atualizada'),
-                                    ),
-                                  );
-                                },
-                              );
-                            },
-                          );
-                        } else if (item['type'] == 'task') {
-                          return ItemExpand(
-                            key: ValueKey([item['id'], item['title']]),
-                            id: index,
-                            title: item['title'],
-                            subtitle: DateFormat(
-                              "d 'de' MMMM 'de' y",
-                              'pt_BR',
-                            ).format(
-                              DateFormat('dd/MM/yyyy').parse(item['datafinal']),
-                            ),
-                            desc: item['desc'],
-                            estadoAtual: item['estado'],
-                            expandItem: 1,
-                            onPressedDel: () async {
-                              bool aceito = await showCustomPopup(
-                                context,
-                                'Deletar tarefa?',
-                                [],
-                              );
-                              if (!aceito) {
-                                return;
-                              }
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'Item deletado: ${item['title']}',
-                                  ),
-                                ),
-                              );
-                              setState(() {
-                                DatabaseHelper().removeTask(item['id']);
-                                _loadItems();
-                              });
-                            },
-                            addItems: Row(
-                              children: [
-                                ElevatedButton(
-                                  onPressed: () async {
-                                    int state = item['estado'];
-                                    state++;
-
-                                    if (state >= 3) {
-                                      state = 0;
-
-                                      bool aceito = await showCustomPopup(
-                                        context,
-                                        'Reiniciar estado?',
-                                        [],
-                                      );
-                                      if (!aceito) {
-                                        return;
-                                      }
-                                    }
-                                    await DatabaseHelper().saveTask(
-                                      item['id'],
-                                      state,
-                                    );
-                                    _loadItems();
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    padding: const EdgeInsets.all(4),
-                                    fixedSize: const Size(120, 48),
-                                    backgroundColor: corState(item['estado']),
-                                  ),
-                                  child: Text(
-                                    nomeState(item['estado']),
-                                    style: TextStyle(
-                                      color: Color.fromARGB(255, 242, 242, 242),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            onPressedEdit: () async {
-                              showCustomPopup(
-                                context,
-                                'Editar Tarefa',
-                                [
-                                  {'value': 'Título', 'type': 'necessary'},
-                                  {'value': 'Descrição', 'type': 'text'},
-                                  {'value': 'Data Final', 'type': 'data'},
-                                ],
-                                fieldValues: [
-                                  item['title'],
-                                  item['desc'],
-                                  item['datafinal'],
-                                ],
-                                onConfirm: (valores) async {
-                                  DateTime date = DateFormat(
-                                    'dd/MM/yyyy',
-                                  ).parse(valores[2]);
-                                  await DatabaseHelper().updateTask(
-                                    item['id'],
-                                    valores[0],
-                                    valores[1],
-                                    date,
-                                    item['ordem'],
-                                  );
-                                  await _loadItems();
-                                  await ScaffoldMessenger.of(
-                                    context,
-                                  ).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Tarefa Atualizada'),
-                                    ),
-                                  );
-                                },
-                              );
-                            },
-                          );
-                        } else if (item['type'] == 'cont') {
-                          return ItemExpand(
-                            key: ValueKey([item['id'], item['title']]),
-                            id: index,
-                            title: item['title'],
-                            subtitle: item['contAtual'].toString(),
-                            expandItem: 1,
-                            onPressedDel: () async {
-                              bool aceito = await showCustomPopup(
-                                context,
-                                'Deletar contagem?',
-                                [],
-                              );
-                              if (!aceito) {
-                                return;
-                              }
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'Item deletado: ${item['title']}',
-                                  ),
-                                ),
-                              );
-                              setState(() {
-                                DatabaseHelper().removeCont(item['id']);
-                                _loadItems();
-                              });
-                            },
-                            addItems: Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                ElevatedButton(
-                                  onPressed: () async {
-                                    int cont = item['contAtual'];
-
-                                    if (cont > item['qntContMin']) {
-                                      cont--;
-                                    }
-
-                                    await DatabaseHelper().saveCont(
-                                      item['id'],
-                                      cont,
-                                    );
-                                    _loadItems();
-                                  },
-                                  child: Icon(Icons.remove),
-                                ),
-                                const SizedBox(width: 4),
-                                ElevatedButton(
-                                  onPressed: () async {
-                                    int cont = item['contAtual'];
-                                    cont++;
-
-                                    if (cont > item['qntContMax']) {
-                                      cont = item['qntContMin'];
-
-                                      bool aceito = await showCustomPopup(
-                                        context,
-                                        'Reiniciar contagem?',
-                                        [],
-                                      );
-                                      if (!aceito) {
-                                        return;
-                                      }
-                                    }
-                                    await DatabaseHelper().saveCont(
-                                      item['id'],
-                                      cont,
-                                    );
-                                    _loadItems();
-                                  },
-                                  child: Icon(Icons.add),
-                                ),
-                              ],
-                            ),
-                            doAnything: Row(
-                              children: [
-                                ElevatedButton(
-                                  //CRIAR O REINICIAR CONTAGEM
-                                  onPressed: () async {
-                                    Clipboard.setData(
-                                      ClipboardData(text: item['url']),
-                                    );
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 12,
-                                    ),
-                                  ),
-                                  child: Icon(Icons.refresh_rounded),
-                                ),
-                                const SizedBox(width: 4),
-                                ElevatedButton(
-                                  //CRIAR HISTÓRICO DAS CONTAGENS
-                                  onPressed: () async {
-                                    Clipboard.setData(
-                                      ClipboardData(text: item['url']),
-                                    );
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 12,
-                                    ),
-                                  ),
-                                  child: Icon(Icons.history),
-                                ),
-                              ],
-                            ),
-                            onPressedEdit: () async {
-                              showCustomPopup(
-                                context,
-                                'Adicionar Contagem',
-                                [
-                                  {'value': 'Título', 'type': 'necessary'},
-                                  {'value': 'Quantidade Mínima', 'type': 'num'},
-                                  {'value': 'Quantidade Máxima', 'type': 'num'},
-                                ],
-                                fieldValues: ['', '0', '100'],
-                                onConfirm: (valores) async {
-                                  await DatabaseHelper().insertCont(
-                                    valores[0],
-                                    int.parse(valores[1]),
-                                    int.parse(valores[2]),
-                                    widget.id,
-                                    ultimaOrdem,
-                                  );
-                                  await _loadItems();
-                                  await ScaffoldMessenger.of(
-                                    context,
-                                  ).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Link Adicionado'),
-                                    ),
-                                  );
-                                },
-                              );
-                            },
-                          );
-                        } else {
-                          return const SizedBox.shrink();
+                        switch (item['type']) {
+                          case 'link':
+                            return linksCreate(item, index);
+                          case 'note':
+                            return notesCreate(item, index);
+                          case 'task':
+                            return tasksCreate(item, index);
+                          case 'cont':
+                            return contsCreate(item, index);
+                          default:
+                            return const SizedBox.shrink();
                         }
                       })(),
                     ],
