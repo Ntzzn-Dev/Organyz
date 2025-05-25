@@ -69,11 +69,6 @@ ThemeData lighttheme(Color corPrimaria) {
     dialogTheme: DialogTheme(
       backgroundColor: Color.fromARGB(255, 242, 242, 242),
     ),
-
-    /*textTheme: ThemeData.light().textTheme.apply(
-    bodyColor: Color.fromARGB(255, 11, 3, 80),
-    displayColor: Color.fromARGB(255, 11, 3, 80),
-  ),*/
     inputDecorationTheme: InputDecorationTheme(
       labelStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
       floatingLabelStyle: TextStyle(

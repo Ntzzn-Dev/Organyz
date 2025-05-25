@@ -100,6 +100,56 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  Widget repoCreate(Map<String, dynamic> items, int index) {
+    final ValueNotifier<String> titleNtf = ValueNotifier<String>(
+      items['title'],
+    );
+    final ValueNotifier<String> subtitleNtf = ValueNotifier<String>(
+      items['subtitle'],
+    );
+
+    return ItemList(
+      key: ValueKey(items['id']),
+      titleNtf: titleNtf,
+      id: index,
+      type: 'repo',
+      subtitleNtf: subtitleNtf,
+      doAnythingUp: Row(
+        children: [
+          ElevatedButton(
+            onPressed: () async {
+              bool aceito = await showCustomPopup(
+                context,
+                'Deletar repositório?',
+                [],
+              );
+              if (!aceito) {
+                return;
+              }
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Item deletado: ${items['title']}')),
+              );
+              setState(() {
+                DatabaseHelper().removeRepo(items['id']);
+                _loadItems();
+              });
+            },
+            style: ElevatedButton.styleFrom(padding: const EdgeInsets.all(4)),
+            child: Icon(Icons.delete),
+          ),
+        ],
+      ),
+      onPressedCard: () {
+        _openRepository(
+          items['title'],
+          items['subtitle'],
+          items['id'],
+          items['cor'] ?? '',
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -251,52 +301,7 @@ class _HomePageState extends State<HomePage> {
               },
               children: [
                 for (int index = 0; index < items.length; index++)
-                  ItemList(
-                    key: ValueKey(items[index]['id']),
-                    title: items[index]['title'],
-                    id: index,
-                    type: 'repo',
-                    subtitle: items[index]['subtitle'],
-                    doAnythingUp: Row(
-                      children: [
-                        ElevatedButton(
-                          onPressed: () async {
-                            bool aceito = await showCustomPopup(
-                              context,
-                              'Deletar repositório?',
-                              [],
-                            );
-                            if (!aceito) {
-                              return;
-                            }
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  'Item deletado: ${items[index]['title']}',
-                                ),
-                              ),
-                            );
-                            setState(() {
-                              DatabaseHelper().removeRepo(items[index]['id']);
-                              _loadItems();
-                            });
-                          },
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.all(4),
-                          ),
-                          child: Icon(Icons.delete),
-                        ),
-                      ],
-                    ),
-                    onPressedCard: () {
-                      _openRepository(
-                        items[index]['title'],
-                        items[index]['subtitle'],
-                        items[index]['id'],
-                        items[index]['cor'] ?? '',
-                      );
-                    },
-                  ),
+                  repoCreate(items[index], index),
               ],
             ),
           ),

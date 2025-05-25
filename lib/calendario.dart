@@ -274,12 +274,21 @@ class _CalendarPageState extends State<CalendarPage> {
             child: ListView.builder(
               itemCount: eventsActual.length,
               itemBuilder: (context, index) {
+                ValueNotifier<String> titleNtf = ValueNotifier<String>(
+                  eventsActual[index]['datafinal'],
+                );
+                ValueNotifier<String> subtitleNotifier = ValueNotifier<String>(
+                  eventsActual[index]['title'],
+                );
+                ValueNotifier<String> descNtf = ValueNotifier<String>(
+                  eventsActual[index]['desc'],
+                );
                 return ItemList(
                   id: index,
                   type: 'task',
-                  title: eventsActual[index]['title'],
-                  subtitle: eventsActual[index]['datafinal'],
-                  desc: eventsActual[index]['desc'],
+                  titleNtf: titleNtf,
+                  descNtf: descNtf,
+                  subtitleNtf: subtitleNotifier,
                   doAnythingUp: Row(
                     children: [
                       ElevatedButton(

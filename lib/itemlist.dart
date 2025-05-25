@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:organyz/themes.dart';
 
 class ItemList extends StatefulWidget {
   final int id;
-  final String title;
-  final String subtitle;
   final String type;
-  final String? desc;
+  final ValueNotifier<String> titleNtf;
+  final ValueNotifier<String> subtitleNtf;
+  final ValueNotifier<String>? descNtf;
   final VoidCallback? onPressedDel;
   final VoidCallback? onPressedEdit;
   final VoidCallback? onPressedCard;
@@ -16,10 +15,10 @@ class ItemList extends StatefulWidget {
   const ItemList({
     super.key,
     required this.id,
-    required this.title,
-    required this.subtitle,
     required this.type,
-    this.desc,
+    required this.titleNtf,
+    required this.subtitleNtf,
+    this.descNtf,
     this.onPressedDel,
     this.onPressedEdit,
     this.onPressedCard,
@@ -58,8 +57,13 @@ class _ItemListState extends State<ItemList> {
     );
   }
 
-  Text textDesc() {
-    return Text(widget.desc!, textAlign: TextAlign.start);
+  Widget textDesc() {
+    return ValueListenableBuilder<String>(
+      valueListenable: widget.titleNtf,
+      builder: (context, value, _) {
+        return Text(widget.descNtf?.value ?? '', textAlign: TextAlign.start);
+      },
+    );
   }
 
   @override
@@ -81,33 +85,42 @@ class _ItemListState extends State<ItemList> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          widget.title,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          softWrap: true,
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 2,
+                        ValueListenableBuilder<String>(
+                          valueListenable: widget.titleNtf,
+                          builder: (context, value, _) {
+                            return Text(
+                              value,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              softWrap: true,
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 2,
+                            );
+                          },
                         ),
                         const SizedBox(height: 8),
-                        Text(
-                          widget.subtitle,
-                          style:
-                              widget.type == 'cont'
-                                  ? const TextStyle(
-                                    fontSize: 18,
-                                    color: Color.fromARGB(255, 36, 36, 36),
-                                    fontWeight: FontWeight.w800,
-                                  )
-                                  : const TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey,
-                                  ),
-                          softWrap: true,
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 3,
+                        ValueListenableBuilder<String>(
+                          valueListenable: widget.subtitleNtf,
+                          builder: (context, value, _) {
+                            return Text(
+                              value,
+                              style:
+                                  widget.type == 'cont'
+                                      ? TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w800,
+                                      )
+                                      : const TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey,
+                                      ),
+                              softWrap: true,
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 3,
+                            );
+                          },
                         ),
                       ],
                     ),
@@ -126,7 +139,8 @@ class _ItemListState extends State<ItemList> {
                     alignment: Alignment.topRight,
                     child:
                         isExpanded &&
-                                (widget.desc != null || widget.type != 'repo')
+                                (widget.descNtf != null ||
+                                    widget.type != 'repo')
                             ? Container(
                               width: double.infinity,
                               padding: const EdgeInsets.symmetric(
@@ -136,7 +150,7 @@ class _ItemListState extends State<ItemList> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  widget.desc != null
+                                  widget.descNtf != null
                                       ? textDesc()
                                       : const SizedBox.shrink(),
                                   Row(

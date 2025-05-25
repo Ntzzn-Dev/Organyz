@@ -528,7 +528,7 @@ class DatabaseHelper {
     return result;
   }
 
-  Future<void> insertCont(
+  Future<int> insertCont(
     String title,
     int qntContMin,
     int qntContMax,
@@ -538,7 +538,7 @@ class DatabaseHelper {
     final db = await database;
     final finalTitle = await verifyTitle(title, 'conts');
 
-    await db.insert('conts', {
+    final id = await db.insert('conts', {
       'title': finalTitle,
       'qntContMin': qntContMin,
       'qntContMax': qntContMax,
@@ -546,6 +546,8 @@ class DatabaseHelper {
       'idrepository': idRepository,
       'ordem': ordem,
     });
+
+    return id;
   }
 
   Future<void> removeCont(int id) async {
@@ -690,15 +692,9 @@ class DatabaseHelper {
         }).toList();
 
     notes =
-        notes
-            .map(
-              (item) => {
-                ...item,
-                'type': 'note',
-                'controller': TextEditingController(text: item['desc'] ?? ''),
-              },
-            )
-            .toList();
+        notes.map((item) {
+          return {...item, 'type': 'note'};
+        }).toList();
 
     tasks =
         tasks.map((item) {

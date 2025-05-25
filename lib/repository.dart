@@ -95,19 +95,23 @@ class _repositoryPageState extends State<Repo> {
   }
 
   Widget linksCreate(Map<String, dynamic> item, int index) {
+    final ValueNotifier<String> titleNtf = ValueNotifier<String>(item['title']);
+    final ValueNotifier<String> subtitleNtf = ValueNotifier<String>(
+      item['url'],
+    );
     return ItemList(
       key: ValueKey([item['id'], item['title']]),
-      title: item['title'],
+      titleNtf: titleNtf,
       id: index,
       type: item['type'],
-      subtitle: item['url'],
+      subtitleNtf: subtitleNtf,
       onPressedDel: () async {
         bool aceito = await showCustomPopup(context, 'Deletar link?', []);
         if (!aceito) {
           return;
         }
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Item deletado: ${item['title']}')),
+          SnackBar(content: Text('Item deletado: ${titleNtf.value}')),
         );
         await DatabaseHelper().removeLink(item['id']);
         await _loadItems();
@@ -116,7 +120,7 @@ class _repositoryPageState extends State<Repo> {
         children: [
           ElevatedButton(
             onPressed: () async {
-              final url = Uri.parse(item['url']);
+              final url = Uri.parse(subtitleNtf.value);
 
               launchUrl(url, mode: LaunchMode.externalApplication);
             },
@@ -133,15 +137,21 @@ class _repositoryPageState extends State<Repo> {
             {'value': 'Título', 'type': 'necessary'},
             {'value': 'Link', 'type': 'text'},
           ],
-          fieldValues: [item['title'], item['url']],
+          fieldValues: [titleNtf.value, subtitleNtf.value],
           onConfirm: (valores) async {
+            String title = valores[0];
+            String url = valores[1];
+
             await DatabaseHelper().updateLink(
               item['id'],
-              valores[0],
-              valores[1],
+              title,
+              url,
               item['ordem'],
             );
-            await _loadItems();
+
+            titleNtf.value = title;
+            subtitleNtf.value = url;
+
             await ScaffoldMessenger.of(
               context,
             ).showSnackBar(const SnackBar(content: Text('Link Atualizado')));
@@ -150,7 +160,7 @@ class _repositoryPageState extends State<Repo> {
       },
       doAnythingDown: ElevatedButton(
         onPressed: () async {
-          Clipboard.setData(ClipboardData(text: item['url']));
+          Clipboard.setData(ClipboardData(text: subtitleNtf.value));
         },
         style: ElevatedButton.styleFrom(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -161,17 +171,18 @@ class _repositoryPageState extends State<Repo> {
   }
 
   Widget notesCreate(Map<String, dynamic> item, int index) {
+    final ValueNotifier<String> titleNtf = ValueNotifier<String>(item['title']);
     return TextAreaList(
       key: ValueKey([item['id'], item['title']]),
-      label: item['title'],
-      controller: item['controller'],
+      labelNtf: titleNtf,
+      controller: TextEditingController(text: item['desc'] ?? ''),
       onPressedDel: () async {
         bool aceito = await showCustomPopup(context, 'Deletar nota?', []);
         if (!aceito) {
           return;
         }
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Item deletado: ${item['title']}')),
+          SnackBar(content: Text('Item deletado: ${titleNtf.value}')),
         );
         setState(() {
           DatabaseHelper().removeNote(item['id']);
@@ -188,14 +199,13 @@ class _repositoryPageState extends State<Repo> {
           [
             {'value': 'Título', 'type': 'necessary'},
           ],
-          fieldValues: [item['title']],
+          fieldValues: [titleNtf.value],
           onConfirm: (valores) async {
-            await DatabaseHelper().updateNote(
-              item['id'],
-              valores[0],
-              item['ordem'],
-            );
-            await _loadItems();
+            String title = valores[0];
+
+            await DatabaseHelper().updateNote(item['id'], title, item['ordem']);
+
+            titleNtf.value = title;
             await ScaffoldMessenger.of(
               context,
             ).showSnackBar(const SnackBar(content: Text('Nota Atualizada')));
@@ -206,38 +216,45 @@ class _repositoryPageState extends State<Repo> {
   }
 
   Widget tasksCreate(Map<String, dynamic> item, int index) {
-    return ItemList(
-      key: ValueKey([item['id'], item['title']]),
-      id: index,
-      title: item['title'],
-      type: item['type'],
-      subtitle: DateFormat(
+    final ValueNotifier<String> titleNtf = ValueNotifier<String>(item['title']);
+    final ValueNotifier<String> subtitleNtf = ValueNotifier<String>(
+      DateFormat(
         "d 'de' MMMM 'de' y",
         'pt_BR',
       ).format(DateFormat('dd/MM/yyyy').parse(item['datafinal'])),
-      desc: item['desc'],
+    );
+    final ValueNotifier<String> descNtf = ValueNotifier<String>(item['desc']);
+    final ValueNotifier<int> stateNtf = ValueNotifier<int>(item['estado']);
+
+    return ItemList(
+      key: ValueKey([item['id'], titleNtf.value]),
+      id: index,
+      titleNtf: titleNtf,
+      type: item['type'],
+      subtitleNtf: subtitleNtf,
+      descNtf: descNtf,
       onPressedDel: () async {
         bool aceito = await showCustomPopup(context, 'Deletar tarefa?', []);
         if (!aceito) {
           return;
         }
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Item deletado: ${item['title']}')),
+          SnackBar(content: Text('Item deletado: ${titleNtf.value}')),
         );
         setState(() {
           DatabaseHelper().removeTask(item['id']);
           _loadItems();
         });
       },
-      doAnythingUp: Row(
-        children: [
-          ElevatedButton(
+      doAnythingUp: ValueListenableBuilder(
+        valueListenable: stateNtf,
+        builder: (context, state, _) {
+          return ElevatedButton(
             onPressed: () async {
-              int state = item['estado'];
-              state++;
+              int newState = state + 1;
 
-              if (state >= 3) {
-                state = 0;
+              if (newState >= 3) {
+                newState = 0;
 
                 bool aceito = await showCustomPopup(
                   context,
@@ -248,20 +265,22 @@ class _repositoryPageState extends State<Repo> {
                   return;
                 }
               }
-              await DatabaseHelper().saveTask(item['id'], state);
-              _loadItems();
+
+              stateNtf.value = newState;
+
+              await DatabaseHelper().saveTask(item['id'], newState);
             },
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.all(4),
               fixedSize: const Size(120, 48),
-              backgroundColor: corState(item['estado']),
+              backgroundColor: corState(state),
             ),
             child: Text(
-              nomeState(item['estado']),
+              nomeState(state),
               style: TextStyle(color: Color.fromARGB(255, 242, 242, 242)),
             ),
-          ),
-        ],
+          );
+        },
       ),
       onPressedEdit: () async {
         showCustomPopup(
@@ -273,20 +292,32 @@ class _repositoryPageState extends State<Repo> {
             {'value': 'Data Final', 'type': 'data'},
           ],
           fieldValues: [
-            item['title'].replaceFirst(RegExp(r'^\d+\s-\s'), '').trim(),
-            item['desc'],
-            item['datafinal'],
+            titleNtf.value.replaceFirst(RegExp(r'^\d+\s-\s'), '').trim(),
+            descNtf.value,
+            DateFormat('dd/MM/yyyy').format(
+              DateFormat(
+                "d 'de' MMMM 'de' y",
+                'pt_BR',
+              ).parse(subtitleNtf.value),
+            ),
           ],
           onConfirm: (valores) async {
+            String title = valores[0];
+            String desc = valores[1];
             DateTime date = DateFormat('dd/MM/yyyy').parse(valores[2]);
+
             await DatabaseHelper().updateTask(
               item['id'],
-              valores[0],
-              valores[1],
+              title,
+              desc,
               date,
               item['ordem'],
             );
-            await _loadItems();
+
+            titleNtf.value = title;
+            descNtf.value = desc;
+            subtitleNtf.value = valores[2];
+
             await ScaffoldMessenger.of(
               context,
             ).showSnackBar(const SnackBar(content: Text('Tarefa Atualizada')));
@@ -297,19 +328,28 @@ class _repositoryPageState extends State<Repo> {
   }
 
   Widget contsCreate(Map<String, dynamic> item, int index) {
+    final ValueNotifier<String> titleNtf = ValueNotifier<String>(item['title']);
+    ValueNotifier<String> subtitleNtf = ValueNotifier<String>(
+      item['contAtual'].toString(),
+    );
+
+    int cont = item['contAtual'];
+    int contMin = item['qntContMin'];
+    int contMax = item['qntContMax'];
+
     return ItemList(
       key: ValueKey([item['id'], item['title']]),
       id: index,
-      title: item['title'],
+      titleNtf: titleNtf,
       type: item['type'],
-      subtitle: item['contAtual'].toString(),
+      subtitleNtf: subtitleNtf,
       onPressedDel: () async {
         bool aceito = await showCustomPopup(context, 'Deletar contagem?', []);
         if (!aceito) {
           return;
         }
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Item deletado: ${item['title']}')),
+          SnackBar(content: Text('Item deletado: ${titleNtf.value}')),
         );
         setState(() {
           DatabaseHelper().removeCont(item['id']);
@@ -321,25 +361,23 @@ class _repositoryPageState extends State<Repo> {
         children: [
           ElevatedButton(
             onPressed: () async {
-              int cont = item['contAtual'];
-
-              if (cont > item['qntContMin']) {
+              if (cont > contMin) {
                 cont--;
               }
 
               await DatabaseHelper().saveCont(item['id'], 'Subtração', cont);
-              _loadItems();
+
+              subtitleNtf.value = cont.toString();
             },
             child: Icon(Icons.remove),
           ),
           const SizedBox(width: 4),
           ElevatedButton(
             onPressed: () async {
-              int cont = item['contAtual'];
               cont++;
 
-              if (cont > item['qntContMax']) {
-                cont = item['qntContMin'];
+              if (cont > contMax) {
+                cont = contMin;
 
                 bool aceito = await showCustomPopup(
                   context,
@@ -349,14 +387,12 @@ class _repositoryPageState extends State<Repo> {
                 if (!aceito) {
                   return;
                 } else {
-                  await DatabaseHelper().restartCont(
-                    item['id'],
-                    item['qntContMin'],
-                  );
+                  await DatabaseHelper().restartCont(item['id'], contMin);
                 }
               }
               await DatabaseHelper().saveCont(item['id'], 'Adição', cont);
-              _loadItems();
+
+              subtitleNtf.value = cont.toString();
             },
             child: Icon(Icons.add),
           ),
@@ -366,11 +402,13 @@ class _repositoryPageState extends State<Repo> {
         children: [
           ElevatedButton(
             onPressed: () async {
-              await DatabaseHelper().restartCont(
-                item['id'],
-                item['qntContMin'],
-              );
-              _loadItems();
+              cont = contMin;
+
+              await DatabaseHelper().restartCont(item['id'], contMin);
+
+              await DatabaseHelper().saveCont(item['id'], 'Adição', cont);
+
+              subtitleNtf.value = cont.toString();
             },
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -401,32 +439,31 @@ class _repositoryPageState extends State<Repo> {
             {'value': 'Quantidade Mínima', 'type': 'num'},
             {'value': 'Quantidade Máxima', 'type': 'num'},
           ],
-          fieldValues: [
-            item['title'],
-            item['qntContMin'].toString(),
-            item['qntContMax'].toString(),
-          ],
+          fieldValues: [titleNtf.value, contMin.toString(), contMax.toString()],
           onConfirm: (valores) async {
-            int contAtual = item['contAtual'];
-            int contMin = int.parse(valores[1]);
-            int contMax = int.parse(valores[2]);
+            String title = valores[0];
+            contMin = int.parse(valores[1]);
+            contMax = int.parse(valores[2]);
 
-            contAtual =
-                contAtual < contMin
+            cont =
+                cont < contMin
                     ? contMin
-                    : contAtual > contMax
+                    : cont > contMax
                     ? contMax
-                    : contAtual;
+                    : cont;
 
             await DatabaseHelper().updateCont(
               item['id'],
-              valores[0],
+              title,
               contMin,
               contMax,
-              contAtual,
+              cont,
               item['ordem'],
             );
-            await _loadItems();
+
+            titleNtf.value = title;
+            subtitleNtf.value = cont.toString();
+
             await ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Contagem Atualizada')),
             );
@@ -704,16 +741,20 @@ class _repositoryPageState extends State<Repo> {
                   ],
                   fieldValues: ['', '0', '100'],
                   onConfirm: (valores) async {
-                    await DatabaseHelper().insertCont(
-                      valores[0],
+                    await DatabaseHelper().saveCont(
+                      await DatabaseHelper().insertCont(
+                        valores[0],
+                        int.parse(valores[1]),
+                        int.parse(valores[2]),
+                        widget.id,
+                        ultimaOrdem,
+                      ),
+                      'Adição',
                       int.parse(valores[1]),
-                      int.parse(valores[2]),
-                      widget.id,
-                      ultimaOrdem,
                     );
                     await _loadItems();
                     await ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Link Adicionado')),
+                      const SnackBar(content: Text('Contagem Adicionada')),
                     );
                     setState(() {
                       showButtons = false;

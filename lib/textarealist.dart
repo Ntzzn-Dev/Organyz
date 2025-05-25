@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class TextAreaList extends StatelessWidget {
   final TextEditingController controller;
-  final String label;
+  final ValueNotifier<String> labelNtf;
   final int minLines;
   final int maxLines;
   final VoidCallback? onPressedDel;
@@ -12,7 +12,7 @@ class TextAreaList extends StatelessWidget {
   const TextAreaList({
     super.key,
     required this.controller,
-    this.label = 'Digite algo...',
+    required this.labelNtf,
     this.minLines = 2,
     this.maxLines = 15,
     this.onPressedDel,
@@ -32,19 +32,24 @@ class TextAreaList extends StatelessWidget {
           elevation: 4,
           child: Padding(
             padding: const EdgeInsets.all(12),
-            child: TextField(
-              controller: controller,
-              minLines: minLines,
-              maxLines: maxLines,
-              decoration: InputDecoration(
-                labelText: label,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                contentPadding: const EdgeInsets.all(12),
-              ),
-              onChanged: (text) {
-                onTextChanged(text);
+            child: ValueListenableBuilder<String>(
+              valueListenable: labelNtf,
+              builder: (context, value, _) {
+                return TextField(
+                  controller: controller,
+                  minLines: minLines,
+                  maxLines: maxLines,
+                  decoration: InputDecoration(
+                    labelText: value,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    contentPadding: const EdgeInsets.all(12),
+                  ),
+                  onChanged: (text) {
+                    onTextChanged(text);
+                  },
+                );
               },
             ),
           ),
