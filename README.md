@@ -46,3 +46,8 @@ Indicado para uma melhor organização de links ou tarefas importantes.
 - Adição de um item no histórico sempre que criado um contador.  
 - Edição do itemList sem necessidade de recarregar totalmente a árvore de widgets.  
 - Troca da cor do número das contagens.  
+
+### version 6.5  
+- Adição da ordem escrita apenas visualmente.  
+- Alteração da ordem escrita dos demais ao editar.  
+- Troca da data pelo titulo no calendario.  

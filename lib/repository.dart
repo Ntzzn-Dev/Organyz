@@ -39,6 +39,7 @@ class _repositoryPageState extends State<Repo> {
   late String? cor;
   bool showButtons = false;
   int btnLigado = -1;
+  final Map<int, ValueNotifier<String>> taskMap = {};
 
   @override
   void initState() {
@@ -91,6 +92,28 @@ class _repositoryPageState extends State<Repo> {
         return 'concluida';
       default:
         return 'error';
+    }
+  }
+
+  void indiceTaskUpdate(String title) {
+    final tasksSemelhantes =
+        itens
+            .where((item) => item['type'] == 'task' && item['title'] == title)
+            .toList();
+
+    tasksSemelhantes.sort((a, b) {
+      final dateA = DateFormat('dd/MM/yyyy').parse(a['datafinal']);
+      final dateB = DateFormat('dd/MM/yyyy').parse(b['datafinal']);
+      return dateA.compareTo(dateB);
+    });
+
+    for (int i = 0; i < tasksSemelhantes.length; i++) {
+      log(tasksSemelhantes[i]['datafinal']);
+    }
+    for (int i = 0; i < tasksSemelhantes.length; i++) {
+      final item = tasksSemelhantes[i];
+      final novoIndice = '${i + 1} | $title';
+      taskMap[item['ordem']]?.value = novoIndice;
     }
   }
 
@@ -216,7 +239,10 @@ class _repositoryPageState extends State<Repo> {
   }
 
   Widget tasksCreate(Map<String, dynamic> item, int index) {
-    final ValueNotifier<String> titleNtf = ValueNotifier<String>(item['title']);
+    final indNtf = taskMap.putIfAbsent(
+      item['ordem'],
+      () => ValueNotifier("${item['ind']}${item['title']}"),
+    );
     final ValueNotifier<String> subtitleNtf = ValueNotifier<String>(
       DateFormat(
         "d 'de' MMMM 'de' y",
@@ -227,9 +253,9 @@ class _repositoryPageState extends State<Repo> {
     final ValueNotifier<int> stateNtf = ValueNotifier<int>(item['estado']);
 
     return ItemList(
-      key: ValueKey([item['id'], titleNtf.value]),
+      key: ValueKey([item['id'], indNtf.value]),
       id: index,
-      titleNtf: titleNtf,
+      titleNtf: indNtf,
       type: item['type'],
       subtitleNtf: subtitleNtf,
       descNtf: descNtf,
@@ -239,7 +265,7 @@ class _repositoryPageState extends State<Repo> {
           return;
         }
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Item deletado: ${titleNtf.value}')),
+          SnackBar(content: Text('Item deletado: ${indNtf.value}')),
         );
         setState(() {
           DatabaseHelper().removeTask(item['id']);
@@ -292,7 +318,7 @@ class _repositoryPageState extends State<Repo> {
             {'value': 'Data Final', 'type': 'data'},
           ],
           fieldValues: [
-            titleNtf.value.replaceFirst(RegExp(r'^\d+\s-\s'), '').trim(),
+            indNtf.value.replaceFirst(RegExp(r'^\d+\s\|\s'), '').trim(),
             descNtf.value,
             DateFormat('dd/MM/yyyy').format(
               DateFormat(
@@ -314,9 +340,14 @@ class _repositoryPageState extends State<Repo> {
               item['ordem'],
             );
 
-            titleNtf.value = title;
+            item['datafinal'] = valores[2];
+
+            indiceTaskUpdate(title);
             descNtf.value = desc;
-            subtitleNtf.value = valores[2];
+            subtitleNtf.value = DateFormat(
+              "d 'de' MMMM 'de' y",
+              'pt_BR',
+            ).format(DateFormat('dd/MM/yyyy').parse(valores[2]));
 
             await ScaffoldMessenger.of(
               context,

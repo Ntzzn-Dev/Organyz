@@ -386,15 +386,8 @@ class DatabaseHelper {
     return result;
   }
 
-  Future<List<Map<String, dynamic>>> ordTasks(
-    String title,
-    DateTime data, {
-    int? id,
-  }) async {
-    List<Map<String, dynamic>> result = await DatabaseHelper().getTasksByTitle(
-      title,
-      id ?? -1,
-    );
+  Future<String> ordTasks(String title, DateTime data, int id) async {
+    List<Map<String, dynamic>> result = await DatabaseHelper().getTasks();
 
     List<Map<String, dynamic>> newOrd = [];
 
@@ -412,18 +405,9 @@ class DatabaseHelper {
       (a, b) => (a['data'] as DateTime).compareTo(b['data'] as DateTime),
     );
 
-    return newOrd;
-  }
-
-  Future<void> reordTasks(String title, int id) async {
-    final db = await database;
-
-    await db.update(
-      'tasks',
-      {'title': title},
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    return newOrd.length == 1
+        ? ''
+        : '${(newOrd.indexWhere((item) => item['id'] == -1) + 1).toString()} |';
   }
 
   Future<void> insertTask(
@@ -435,24 +419,10 @@ class DatabaseHelper {
     int estado = 0,
   }) async {
     final db = await database;
-    List<Map<String, dynamic>> lista = await ordTasks(title, date);
-
-    for (Map<String, dynamic> task in lista) {
-      int pos = lista.indexWhere((item) => item['id'] == task['id']);
-      reordTasks(
-        '${pos + 1} - ${task['title'].replaceFirst(RegExp(r'^\d+\s-\s'), '')}',
-        task['id'],
-      );
-    }
-
-    String pos =
-        lista.length == 1
-            ? ''
-            : '${(lista.indexWhere((item) => item['id'] == -1) + 1).toString()} - ';
 
     String formattedDate = DateFormat('dd/MM/yyyy').format(date);
     await db.insert('tasks', {
-      'title': '$pos$title',
+      'title': title,
       'desc': desc,
       'datafinal': formattedDate,
       'estado': estado,
@@ -486,28 +456,11 @@ class DatabaseHelper {
   ) async {
     final db = await database;
 
-    List<Map<String, dynamic>> lista = await ordTasks(title, date, id: id);
-
-    for (Map<String, dynamic> task in lista) {
-      int pos = lista.indexWhere((item) => item['id'] == task['id']);
-      if (task['id'] != id) {
-        reordTasks(
-          '${pos + 1} - ${task['title'].replaceFirst(RegExp(r'^\d+\s-\s'), '')}',
-          task['id'],
-        );
-      }
-    }
-
-    String pos =
-        lista.length == 1
-            ? ''
-            : '${(lista.indexWhere((item) => item['id'] == -1) + 1).toString()} - ';
-
     String formattedDate = DateFormat('dd/MM/yyyy').format(date);
     await db.update(
       'tasks',
       {
-        'title': '$pos$title',
+        'title': title,
         'desc': desc,
         'datafinal': formattedDate,
         'ordem': ordem,
@@ -706,11 +659,43 @@ class DatabaseHelper {
           return {...item, 'type': 'cont'};
         }).toList();
 
+    criarIndice(tasks);
+
     List<Map<String, dynamic>> all = [...links, ...notes, ...tasks, ...conts];
 
     all.sort((a, b) => (a['ordem'] as int).compareTo(b['ordem'] as int));
 
     return all;
+  }
+
+  void criarIndice(List<Map<String, dynamic>> tasks) {
+    Map<String, List<Map<String, dynamic>>> agrupadasPorTitulo = {};
+
+    for (final task in tasks) {
+      final title = task['title'];
+      if (!agrupadasPorTitulo.containsKey(title)) {
+        agrupadasPorTitulo[title] = [];
+      }
+      agrupadasPorTitulo[title]!.add(task);
+    }
+
+    agrupadasPorTitulo.forEach((title, lista) {
+      lista.sort((a, b) {
+        final dateA = DateFormat('dd/MM/yyyy').parse(a['datafinal']);
+        final dateB = DateFormat('dd/MM/yyyy').parse(b['datafinal']);
+        return dateA.compareTo(dateB);
+      });
+
+      int cont = 1;
+      for (final task in lista) {
+        if (lista.length > 1) {
+          task['ind'] = '$cont | ';
+          cont++;
+        } else {
+          task['ind'] = '';
+        }
+      }
+    });
   }
 
   Future<List<Map<String, dynamic>>> getRepoFull(int idRepository) async {

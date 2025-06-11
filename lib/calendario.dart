@@ -275,10 +275,10 @@ class _CalendarPageState extends State<CalendarPage> {
               itemCount: eventsActual.length,
               itemBuilder: (context, index) {
                 ValueNotifier<String> titleNtf = ValueNotifier<String>(
-                  eventsActual[index]['datafinal'],
+                  eventsActual[index]['title'],
                 );
                 ValueNotifier<String> subtitleNotifier = ValueNotifier<String>(
-                  eventsActual[index]['title'],
+                  eventsActual[index]['datafinal'],
                 );
                 ValueNotifier<String> descNtf = ValueNotifier<String>(
                   eventsActual[index]['desc'],
