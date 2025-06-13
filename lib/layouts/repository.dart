@@ -2,12 +2,12 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:organyz/main.dart';
-import 'package:organyz/popuphistory.dart';
+import 'package:organyz/itens/popuphistory.dart';
 import 'package:organyz/themes.dart';
-import 'itemlist.dart';
-import 'database_helper.dart';
-import 'popup.dart';
-import 'textarealist.dart';
+import '../itens/itemcard.dart';
+import '../database_helper.dart';
+import '../itens/popup.dart';
+import '../itens/textarealist.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
@@ -122,7 +122,7 @@ class _repositoryPageState extends State<Repo> {
     final ValueNotifier<String> subtitleNtf = ValueNotifier<String>(
       item['url'],
     );
-    return ItemList(
+    return ItemCard(
       key: ValueKey([item['id'], item['title']]),
       titleNtf: titleNtf,
       id: index,
@@ -190,6 +190,10 @@ class _repositoryPageState extends State<Repo> {
         ),
         child: Icon(Icons.copy),
       ),
+      onPressedCard: () {
+        item['opened'] = !item['opened'];
+      },
+      isExpanded: item['opened'],
     );
   }
 
@@ -252,7 +256,10 @@ class _repositoryPageState extends State<Repo> {
     final ValueNotifier<String> descNtf = ValueNotifier<String>(item['desc']);
     final ValueNotifier<int> stateNtf = ValueNotifier<int>(item['estado']);
 
-    return ItemList(
+    bool haveQuest = false;
+
+    haveQuest = item['porcent'] != null;
+    return ItemCard(
       key: ValueKey([item['id'], indNtf.value]),
       id: index,
       titleNtf: indNtf,
@@ -277,24 +284,26 @@ class _repositoryPageState extends State<Repo> {
         builder: (context, state, _) {
           return ElevatedButton(
             onPressed: () async {
-              int newState = state + 1;
+              if (haveQuest) {
+                int newState = state + 1;
 
-              if (newState >= 3) {
-                newState = 0;
+                if (newState >= 3) {
+                  newState = 0;
 
-                bool aceito = await showCustomPopup(
-                  context,
-                  'Reiniciar estado?',
-                  [],
-                );
-                if (!aceito) {
-                  return;
+                  bool aceito = await showCustomPopup(
+                    context,
+                    'Reiniciar estado?',
+                    [],
+                  );
+                  if (!aceito) {
+                    return;
+                  }
                 }
+
+                stateNtf.value = newState;
+
+                await DatabaseHelper().saveTask(item['id'], newState);
               }
-
-              stateNtf.value = newState;
-
-              await DatabaseHelper().saveTask(item['id'], newState);
             },
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.all(4),
@@ -302,7 +311,7 @@ class _repositoryPageState extends State<Repo> {
               backgroundColor: corState(state),
             ),
             child: Text(
-              nomeState(state),
+              haveQuest ? "${item['porcent']}%" : nomeState(state),
               style: TextStyle(color: Color.fromARGB(255, 242, 242, 242)),
             ),
           );
@@ -355,6 +364,10 @@ class _repositoryPageState extends State<Repo> {
           },
         );
       },
+      onPressedCard: () {
+        item['opened'] = !item['opened'];
+      },
+      isExpanded: item['opened'],
     );
   }
 
@@ -368,7 +381,7 @@ class _repositoryPageState extends State<Repo> {
     int contMin = item['qntContMin'];
     int contMax = item['qntContMax'];
 
-    return ItemList(
+    return ItemCard(
       key: ValueKey([item['id'], item['title']]),
       id: index,
       titleNtf: titleNtf,
@@ -501,6 +514,101 @@ class _repositoryPageState extends State<Repo> {
           },
         );
       },
+      onPressedCard: () {
+        item['opened'] = !item['opened'];
+      },
+      isExpanded: item['opened'],
+    );
+  }
+
+  Widget buildButtonState(
+    List<Map<String, dynamic>> identificacao,
+    List<VoidCallback> acoes,
+  ) {
+    final segundacor = Theme.of(context).extension<CustomColors>()!.corBase;
+    final primeiracor = Theme.of(context).extension<CustomColors>()!.concluido;
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          for (int i = 0; i < identificacao.length; i++) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: ElevatedButton(
+                onPressed: () async {
+                  btnLigado = btnLigado == i ? -1 : i;
+
+                  if (btnLigado == -1) {
+                    await _loadItems();
+                    return;
+                  }
+
+                  acoes[i]();
+                },
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 10,
+                  ),
+                  backgroundColor: btnLigado == i ? primeiracor : segundacor,
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      identificacao[i]['icon'],
+                      color: btnLigado == i ? segundacor : primeiracor,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      identificacao[i]['label'],
+                      style: TextStyle(
+                        color: btnLigado == i ? segundacor : primeiracor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget buildAnimatedButton(
+    double bottomPosition,
+    IconData icon,
+    VoidCallback acao,
+  ) {
+    return AnimatedPositioned(
+      duration: Duration(milliseconds: 300),
+      bottom: showButtons ? bottomPosition : 20,
+      right: 25,
+      curve: Curves.easeOut,
+      child: AnimatedOpacity(
+        duration: Duration(milliseconds: 300),
+        opacity: showButtons ? 1.0 : 0.0,
+        child: Container(
+          width: 50,
+          height: 50,
+          decoration: BoxDecoration(
+            color: Theme.of(context).extension<CustomColors>()!.iniciado,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black26,
+                blurRadius: 6,
+                offset: Offset(2, 2),
+              ),
+            ],
+          ),
+          child: IconButton(
+            icon: Icon(icon, color: Colors.white, size: 24),
+            onPressed: acao,
+          ),
+        ),
+      ),
     );
   }
 
@@ -626,25 +734,16 @@ class _repositoryPageState extends State<Repo> {
               Expanded(
                 child: ReorderableListView(
                   onReorder: (oldIndex, newIndex) async {
-                    List<Map<String, dynamic>> modifiableItems =
-                        itens
-                            .map((item) => Map<String, dynamic>.from(item))
-                            .toList();
-
-                    if (newIndex > oldIndex) newIndex -= 1;
-
-                    final item = modifiableItems.removeAt(oldIndex);
-                    modifiableItems.insert(newIndex, item);
-
                     setState(() {
-                      itens = modifiableItems;
+                      if (newIndex > oldIndex) newIndex -= 1;
+
+                      final item = itens.removeAt(oldIndex);
+                      itens.insert(newIndex, item);
                     });
 
                     //Salva a ordem apenas se os filtros estiverem desativados
                     btnLigado == -1
-                        ? await DatabaseHelper().setOrdemItemsRepo(
-                          modifiableItems,
-                        )
+                        ? await DatabaseHelper().setOrdemItemsRepo(itens)
                         : null;
                   },
                   children: [
@@ -823,97 +922,6 @@ class _repositoryPageState extends State<Repo> {
               ),
             ],
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget buildAnimatedButton(
-    double bottomPosition,
-    IconData icon,
-    VoidCallback acao,
-  ) {
-    return AnimatedPositioned(
-      duration: Duration(milliseconds: 300),
-      bottom: showButtons ? bottomPosition : 20,
-      right: 25,
-      curve: Curves.easeOut,
-      child: AnimatedOpacity(
-        duration: Duration(milliseconds: 300),
-        opacity: showButtons ? 1.0 : 0.0,
-        child: Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            color: Theme.of(context).extension<CustomColors>()!.iniciado,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black26,
-                blurRadius: 6,
-                offset: Offset(2, 2),
-              ),
-            ],
-          ),
-          child: IconButton(
-            icon: Icon(icon, color: Colors.white, size: 24),
-            onPressed: acao,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget buildButtonState(
-    List<Map<String, dynamic>> identificacao,
-    List<VoidCallback> acoes,
-  ) {
-    final segundacor = Theme.of(context).extension<CustomColors>()!.corBase;
-    final primeiracor = Theme.of(context).extension<CustomColors>()!.concluido;
-
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          for (int i = 0; i < identificacao.length; i++) ...[
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: ElevatedButton(
-                onPressed: () async {
-                  btnLigado = btnLigado == i ? -1 : i;
-
-                  if (btnLigado == -1) {
-                    await _loadItems();
-                    return;
-                  }
-
-                  acoes[i]();
-                },
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 10,
-                  ),
-                  backgroundColor: btnLigado == i ? primeiracor : segundacor,
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      identificacao[i]['icon'],
-                      color: btnLigado == i ? segundacor : primeiracor,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      identificacao[i]['label'],
-                      style: TextStyle(
-                        color: btnLigado == i ? segundacor : primeiracor,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
         ],
       ),
     );

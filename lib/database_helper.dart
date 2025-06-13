@@ -74,6 +74,18 @@ class DatabaseHelper {
         ''');
 
         await db.execute('''
+          CREATE TABLE tasks_quests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT,
+            desc TEXT,
+            completed INTEGER,
+            idtask INTEGER,
+            ordem INTEGER,
+            FOREIGN KEY (idtask) REFERENCES tasks(id) ON DELETE CASCADE
+          )
+        ''');
+
+        await db.execute('''
           CREATE TABLE conts (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT,
@@ -470,6 +482,39 @@ class DatabaseHelper {
     );
   }
 
+  Future<int> insertTaskQuest(
+    String title,
+    String desc,
+    int idTask,
+    int ordem,
+  ) async {
+    final db = await database;
+
+    return await db.insert('tasks_quests', {
+      'title': title,
+      'desc': desc,
+      'completed': false,
+      'idtask': idTask,
+      'ordem': ordem,
+    });
+  }
+
+  Future<void> removeTaskQuest(int id) async {
+    final db = await database;
+    await db.delete('tasks_quests', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<void> saveTaskQuest(int id, bool state) async {
+    final db = await database;
+
+    await db.update(
+      'tasks_quests',
+      {'completed': state},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
   //CONTS =====================================================================
   Future<List<Map<String, dynamic>>> getCont(int idRepository) async {
     final db = await database;
@@ -641,25 +686,50 @@ class DatabaseHelper {
 
     links =
         links.map((item) {
-          return {...item, 'type': 'link'};
+          return {...item, 'type': 'link', 'opened': false};
         }).toList();
 
     notes =
         notes.map((item) {
-          return {...item, 'type': 'note'};
+          return {...item, 'type': 'note', 'opened': false};
         }).toList();
 
     tasks =
         tasks.map((item) {
-          return {...item, 'type': 'task'};
+          return {...item, 'type': 'task', 'opened': false};
         }).toList();
 
     conts =
         conts.map((item) {
-          return {...item, 'type': 'cont'};
+          return {...item, 'type': 'cont', 'opened': false};
         }).toList();
 
     criarIndice(tasks);
+
+    List<Map<String, dynamic>> quests = await db.query('tasks_quests');
+
+    quests =
+        quests.map((item) {
+          return {
+            ...item,
+            'type': 'tasks_quests',
+            'completed': item['completed'] == 1,
+          };
+        }).toList();
+
+    for (var task in tasks) {
+      final idTask = task['id'];
+      final questsDaTask = quests.where((q) => q['idtask'] == idTask).toList();
+
+      if (questsDaTask.isNotEmpty) {
+        final total = questsDaTask.length;
+        final completos =
+            questsDaTask.where((q) => q['completed'] == true).length;
+        final porcentagem = ((completos / total) * 100).round();
+
+        task['porcent'] = porcentagem;
+      }
+    }
 
     List<Map<String, dynamic>> all = [...links, ...notes, ...tasks, ...conts];
 
@@ -696,6 +766,36 @@ class DatabaseHelper {
         }
       }
     });
+  }
+
+  Future<List<Map<String, dynamic>>> getAllQuestsOrdered() async {
+    final db = await database;
+
+    List<Map<String, dynamic>> tasks = await db.query('tasks');
+    List<Map<String, dynamic>> quests = await db.query('tasks_quests');
+
+    tasks =
+        tasks.map((item) {
+          return {...item, 'type': 'task', 'opened': false};
+        }).toList();
+
+    quests =
+        quests.map((item) {
+          return {
+            ...item,
+            'type': 'tasks_quests',
+            'completed': item['completed'] == 1,
+          };
+        }).toList();
+
+    criarIndice(tasks);
+
+    tasks.sort((a, b) => (a['ordem'] as int).compareTo(b['ordem'] as int));
+    quests.sort((a, b) => (a['ordem'] as int).compareTo(b['ordem'] as int));
+
+    List<Map<String, dynamic>> all = [...tasks, ...quests];
+
+    return all;
   }
 
   Future<List<Map<String, dynamic>>> getRepoFull(int idRepository) async {

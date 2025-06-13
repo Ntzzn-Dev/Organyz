@@ -2,12 +2,12 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'itemlist.dart';
+import 'itens/itemcard.dart';
 import 'database_helper.dart';
-import 'popup.dart';
-import 'repository.dart';
+import 'itens/popup.dart';
+import 'layouts/repository.dart';
 import 'themes.dart';
-import 'calendario.dart';
+import 'layouts/pendant.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 final ValueNotifier<Color> corPrimaria = ValueNotifier<Color>(
@@ -92,7 +92,7 @@ class _HomePageState extends State<HomePage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => CalendarPage(),
+        builder: (context) => PendantPage(),
         settings: RouteSettings(name: 'calendar'),
       ),
     ).then((_) {
@@ -108,7 +108,7 @@ class _HomePageState extends State<HomePage> {
       items['subtitle'],
     );
 
-    return ItemList(
+    return ItemCard(
       key: ValueKey(items['id']),
       titleNtf: titleNtf,
       id: index,

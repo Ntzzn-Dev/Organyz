@@ -1,6 +1,8 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 
-class ItemList extends StatefulWidget {
+class ItemCard extends StatefulWidget {
   final int id;
   final String type;
   final ValueNotifier<String> titleNtf;
@@ -11,8 +13,10 @@ class ItemList extends StatefulWidget {
   final VoidCallback? onPressedCard;
   final Widget? doAnythingDown;
   final Widget? doAnythingUp;
+  final ValueNotifier<List<Widget>>? widgetDesc;
+  final bool? isExpanded;
 
-  const ItemList({
+  const ItemCard({
     super.key,
     required this.id,
     required this.type,
@@ -24,14 +28,26 @@ class ItemList extends StatefulWidget {
     this.onPressedCard,
     this.doAnythingDown,
     this.doAnythingUp,
+    this.widgetDesc,
+    this.isExpanded,
   });
 
   @override
-  State<ItemList> createState() => _ItemListState();
+  State<ItemCard> createState() => _ItemCardState();
 }
 
-class _ItemListState extends State<ItemList> {
-  ValueNotifier<bool> isExpandedNotifier = ValueNotifier<bool>(false);
+class _ItemCardState extends State<ItemCard> {
+  late ValueNotifier<bool> isExpandedNotifier;
+  late ValueNotifier<List<Widget>> _widgetDescNtf;
+
+  @override
+  void initState() {
+    super.initState();
+    isExpandedNotifier = ValueNotifier<bool>(widget.isExpanded ?? false);
+    _widgetDescNtf = ValueNotifier<List<Widget>>(
+      widget.widgetDesc?.value ?? [],
+    );
+  }
 
   void _toggleValue() {
     isExpandedNotifier.value = !isExpandedNotifier.value;
@@ -57,21 +73,38 @@ class _ItemListState extends State<ItemList> {
     );
   }
 
-  Widget textDesc() {
-    return ValueListenableBuilder<String>(
-      valueListenable: widget.titleNtf,
-      builder: (context, value, _) {
-        return Text(widget.descNtf?.value ?? '', textAlign: TextAlign.start);
-      },
-    );
+  Widget descExpand() {
+    return widget.widgetDesc != null
+        ? ValueListenableBuilder<List<Widget>>(
+          valueListenable: widget.widgetDesc!,
+          builder: (context, list, _) {
+            return ReorderableListView(
+              shrinkWrap: true,
+              onReorder: (oldIndex, newIndex) {
+                final newList = List<Widget>.from(list);
+                if (newIndex > oldIndex) newIndex -= 1;
+                final item = newList.removeAt(oldIndex);
+                newList.insert(newIndex, item);
+                widget.widgetDesc!.value = newList;
+              },
+              children: list,
+            );
+          },
+        )
+        : Text(widget.descNtf?.value ?? '', textAlign: TextAlign.start);
   }
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: widget.type == 'repo' ? widget.onPressedCard : _toggleValue,
+      onTap: () {
+        widget.onPressedCard?.call();
+        if (widget.type != 'repo') {
+          _toggleValue();
+        }
+      },
       child: Card(
-        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+        margin: EdgeInsets.symmetric(vertical: 5, horizontal: 16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         elevation: 4,
         child: Padding(
@@ -140,7 +173,9 @@ class _ItemListState extends State<ItemList> {
                     child:
                         isExpanded &&
                                 (widget.descNtf != null ||
-                                    widget.type != 'repo')
+                                    widget.onPressedDel != null ||
+                                    widget.onPressedEdit != null) &&
+                                widget.type != 'repo'
                             ? Container(
                               width: double.infinity,
                               padding: const EdgeInsets.symmetric(
@@ -151,7 +186,7 @@ class _ItemListState extends State<ItemList> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   widget.descNtf != null
-                                      ? textDesc()
+                                      ? descExpand()
                                       : const SizedBox.shrink(),
                                   Row(
                                     mainAxisAlignment:
@@ -161,10 +196,13 @@ class _ItemListState extends State<ItemList> {
                                           const SizedBox.shrink(),
                                       Row(
                                         children: [
-                                          editButton(),
+                                          widget.onPressedEdit != null
+                                              ? editButton()
+                                              : const SizedBox.shrink(),
                                           const SizedBox(width: 4),
-
-                                          deleteButton(),
+                                          widget.onPressedDel != null
+                                              ? deleteButton()
+                                              : const SizedBox.shrink(),
                                         ],
                                       ),
                                     ],

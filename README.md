@@ -51,3 +51,10 @@ Indicado para uma melhor organização de links ou tarefas importantes.
 - Adição da ordem escrita apenas visualmente.  
 - Alteração da ordem escrita dos demais ao editar.  
 - Troca da data pelo titulo no calendario.  
+
+### version 7.0  
+- Criação das quests no banco de dados para as tasks.  
+- Reorganização dos elementos otimizada.  
+- Salva temporariamente o estado sobre estar expandido ou não.  
+- Criacao das etapas para a finalização da tarefa.  
+- Visualização em porcentagem para tasks com quests.  
