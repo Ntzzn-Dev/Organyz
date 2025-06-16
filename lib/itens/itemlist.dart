@@ -87,7 +87,7 @@ class _ItemListState extends State<ItemList> {
             borderRadius: BorderRadius.circular(6),
           ),
           child: InkWell(
-            onTap: widget.type == 'repo' ? widget.onPressedCard : _toggleValue,
+            onTap: widget.onPressedCard,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
               child: Column(

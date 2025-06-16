@@ -371,33 +371,6 @@ class DatabaseHelper {
     return result;
   }
 
-  Future<List<Map<String, dynamic>>> getTasksByTitle(
-    String title,
-    int id,
-  ) async {
-    final db = await database;
-    title = title.replaceFirst(RegExp(r'^\d+\s-\s'), '').trim();
-    List<Map<String, dynamic>> result = await db.query(
-      'tasks',
-      where: 'title LIKE ? AND id != ?',
-      whereArgs: ['%$title', id],
-    );
-
-    result =
-        result.map((item) {
-          return {...item};
-        }).toList();
-
-    for (Map<String, dynamic> task in result) {
-      String datafinalStr = task['datafinal'];
-      DateTime datafinal = DateFormat('dd/MM/yyyy').parse(datafinalStr);
-      String formattedDate = DateFormat('dd/MM/yyyy').format(datafinal);
-      task['datafinal'] = formattedDate;
-    }
-
-    return result;
-  }
-
   Future<String> ordTasks(String title, DateTime data, int id) async {
     List<Map<String, dynamic>> result = await DatabaseHelper().getTasks();
 
@@ -504,6 +477,30 @@ class DatabaseHelper {
     await db.delete('tasks_quests', where: 'id = ?', whereArgs: [id]);
   }
 
+  Future<void> updateTaskQuest(
+    String title,
+    String desc,
+    bool completed,
+    int idTask,
+    int ordem,
+    int id,
+  ) async {
+    final db = await database;
+
+    await db.update(
+      'tasks_quests',
+      {
+        'title': title,
+        'desc': desc,
+        'completed': completed,
+        'idtask': idTask,
+        'ordem': ordem,
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
   Future<void> saveTaskQuest(int id, bool state) async {
     final db = await database;
 
@@ -513,6 +510,20 @@ class DatabaseHelper {
       where: 'id = ?',
       whereArgs: [id],
     );
+  }
+
+  Future<void> setOrdemTaskQuest(List<int> ids) async {
+    final db = await database;
+    int count = 0;
+    for (int id in ids) {
+      await db.update(
+        'tasks_quests',
+        {'ordem': count},
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+      count++;
+    }
   }
 
   //CONTS =====================================================================

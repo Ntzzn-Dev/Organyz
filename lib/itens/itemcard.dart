@@ -15,6 +15,7 @@ class ItemCard extends StatefulWidget {
   final Widget? doAnythingUp;
   final ValueNotifier<List<Widget>>? widgetDesc;
   final bool? isExpanded;
+  final Function(List<int>)? ordemWidgets;
 
   const ItemCard({
     super.key,
@@ -30,6 +31,7 @@ class ItemCard extends StatefulWidget {
     this.doAnythingUp,
     this.widgetDesc,
     this.isExpanded,
+    this.ordemWidgets,
   });
 
   @override
@@ -38,15 +40,11 @@ class ItemCard extends StatefulWidget {
 
 class _ItemCardState extends State<ItemCard> {
   late ValueNotifier<bool> isExpandedNotifier;
-  late ValueNotifier<List<Widget>> _widgetDescNtf;
 
   @override
   void initState() {
     super.initState();
     isExpandedNotifier = ValueNotifier<bool>(widget.isExpanded ?? false);
-    _widgetDescNtf = ValueNotifier<List<Widget>>(
-      widget.widgetDesc?.value ?? [],
-    );
   }
 
   void _toggleValue() {
@@ -86,12 +84,31 @@ class _ItemCardState extends State<ItemCard> {
                 final item = newList.removeAt(oldIndex);
                 newList.insert(newIndex, item);
                 widget.widgetDesc!.value = newList;
+
+                log(saveNewOrder(newList).length.toString());
+                widget.ordemWidgets!(saveNewOrder(newList));
               },
               children: list,
             );
           },
         )
         : Text(widget.descNtf?.value ?? '', textAlign: TextAlign.start);
+  }
+
+  List<int> saveNewOrder(List<Widget> newList) {
+    return newList
+        .map((widget) {
+          final key = widget.key;
+          if (key is ValueKey) {
+            final value = key.value;
+            if (value is String) {
+              return int.tryParse(value.split('_')[0]);
+            }
+          }
+          return null;
+        })
+        .whereType<int>()
+        .toList();
   }
 
   @override

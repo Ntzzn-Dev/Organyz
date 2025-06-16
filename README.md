@@ -58,3 +58,8 @@ Indicado para uma melhor organização de links ou tarefas importantes.
 - Salva temporariamente o estado sobre estar expandido ou não.  
 - Criacao das etapas para a finalização da tarefa.  
 - Visualização em porcentagem para tasks com quests.  
+
+### version 7.1  
+- Exclusão de quests individualmente.  
+- Reordenação das quests consertado.  
+- Edição direta do titulo e descrição das quests.  

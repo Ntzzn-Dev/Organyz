@@ -123,7 +123,7 @@ class _repositoryPageState extends State<Repo> {
       item['url'],
     );
     return ItemCard(
-      key: ValueKey([item['id'], item['title']]),
+      key: ValueKey('${item['id']}_${item['title']}'),
       titleNtf: titleNtf,
       id: index,
       type: item['type'],
@@ -200,7 +200,7 @@ class _repositoryPageState extends State<Repo> {
   Widget notesCreate(Map<String, dynamic> item, int index) {
     final ValueNotifier<String> titleNtf = ValueNotifier<String>(item['title']);
     return TextAreaList(
-      key: ValueKey([item['id'], item['title']]),
+      key: ValueKey('${item['id']}_${item['title']}'),
       labelNtf: titleNtf,
       controller: TextEditingController(text: item['desc'] ?? ''),
       onPressedDel: () async {
@@ -260,7 +260,7 @@ class _repositoryPageState extends State<Repo> {
 
     haveQuest = item['porcent'] != null;
     return ItemCard(
-      key: ValueKey([item['id'], indNtf.value]),
+      key: ValueKey('${item['id']}_${indNtf.value}'),
       id: index,
       titleNtf: indNtf,
       type: item['type'],
@@ -382,7 +382,7 @@ class _repositoryPageState extends State<Repo> {
     int contMax = item['qntContMax'];
 
     return ItemCard(
-      key: ValueKey([item['id'], item['title']]),
+      key: ValueKey('${item['id']}_${item['title']}'),
       id: index,
       titleNtf: titleNtf,
       type: item['type'],
