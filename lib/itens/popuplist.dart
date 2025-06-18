@@ -1,8 +1,11 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 
-Future<bool> showPopupHistory(
+Future<bool> showPopupList(
   BuildContext context,
   String label,
+  List<Map<String, dynamic>> values,
   List<Map<String, dynamic>> fieldLabels,
 ) async {
   Widget createOrdem(List<Map<String, dynamic>> dados) {
@@ -10,10 +13,13 @@ Future<bool> showPopupHistory(
       mainAxisSize: MainAxisSize.min,
       children: [
         Row(
-          children: const [
-            Expanded(flex: 1, child: Center(child: Text('Cont'))),
-            Expanded(flex: 2, child: Center(child: Text('Tipo'))),
-            Expanded(flex: 3, child: Center(child: Text('Tempo'))),
+          children: [
+            for (int i = 0; i < fieldLabels.length; i++) ...[
+              Expanded(
+                flex: fieldLabels[i]['flex'],
+                child: Center(child: Text(fieldLabels[i]['name'])),
+              ),
+            ],
           ],
         ),
 
@@ -28,20 +34,19 @@ Future<bool> showPopupHistory(
                       padding: const EdgeInsets.symmetric(vertical: 6),
                       child: Row(
                         children: [
-                          Expanded(
-                            flex: 1,
-                            child: Center(
-                              child: Text(item['contAtual'].toString()),
+                          for (int i = 0; i < item.length; i++) ...[
+                            Expanded(
+                              flex: fieldLabels[i]['flex'],
+                              child:
+                                  fieldLabels[i]['centralize']
+                                      ? Center(
+                                        child: Text(
+                                          item['valor${i + 1}'].toString(),
+                                        ),
+                                      )
+                                      : Text(item['valor${i + 1}'].toString()),
                             ),
-                          ),
-                          Expanded(
-                            flex: 2,
-                            child: Center(child: Text(item['direcao'])),
-                          ),
-                          Expanded(
-                            flex: 3,
-                            child: Center(child: Text(item['datadacontagem'])),
-                          ),
+                          ],
                         ],
                       ),
                     );
@@ -60,7 +65,7 @@ Future<bool> showPopupHistory(
         builder: (context, setState) {
           return AlertDialog(
             title: Center(child: Text(label)),
-            content: createOrdem(fieldLabels),
+            content: createOrdem(values),
             actions: [
               ElevatedButton(
                 onPressed: () => Navigator.of(context).pop(false),

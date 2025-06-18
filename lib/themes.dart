@@ -58,6 +58,7 @@ ThemeData lighttheme(Color corPrimaria) {
     appBarTheme: AppBarTheme(
       backgroundColor: Color.fromARGB(255, 237, 237, 237),
       foregroundColor: corPrimaria,
+      surfaceTintColor: Color.fromARGB(255, 242, 242, 242),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
@@ -65,7 +66,10 @@ ThemeData lighttheme(Color corPrimaria) {
         foregroundColor: corPrimaria,
       ),
     ),
-    cardTheme: CardTheme(color: Color.fromARGB(255, 242, 242, 242)),
+    cardTheme: CardTheme(
+      color: Color.fromARGB(255, 237, 237, 237),
+      surfaceTintColor: Colors.transparent,
+    ),
     dialogTheme: DialogTheme(
       backgroundColor: Color.fromARGB(255, 242, 242, 242),
     ),
@@ -116,6 +120,7 @@ ThemeData darkTheme(Color corPrimaria) {
     appBarTheme: AppBarTheme(
       backgroundColor: Color.fromARGB(255, 37, 37, 37),
       foregroundColor: corPrimaria,
+      surfaceTintColor: Color.fromARGB(255, 37, 37, 37),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(

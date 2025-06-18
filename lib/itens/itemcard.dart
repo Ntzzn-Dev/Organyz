@@ -8,6 +8,7 @@ class ItemCard extends StatefulWidget {
   final ValueNotifier<String> titleNtf;
   final ValueNotifier<String> subtitleNtf;
   final ValueNotifier<String>? descNtf;
+  final ValueNotifier<Color>? colorNtf;
   final VoidCallback? onPressedDel;
   final VoidCallback? onPressedEdit;
   final VoidCallback? onPressedCard;
@@ -24,6 +25,7 @@ class ItemCard extends StatefulWidget {
     required this.titleNtf,
     required this.subtitleNtf,
     this.descNtf,
+    this.colorNtf,
     this.onPressedDel,
     this.onPressedEdit,
     this.onPressedCard,
@@ -113,128 +115,141 @@ class _ItemCardState extends State<ItemCard> {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () {
-        widget.onPressedCard?.call();
-        if (widget.type != 'repo') {
-          _toggleValue();
-        }
-      },
-      child: Card(
-        margin: EdgeInsets.symmetric(vertical: 5, horizontal: 16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        elevation: 4,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          child: Column(
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
+    return ValueListenableBuilder<Color>(
+      valueListenable:
+          widget.colorNtf ??
+          ValueNotifier<Color>(
+            Theme.of(context).cardTheme.color ?? Colors.white,
+          ),
+      builder: (context, color, _) {
+        return InkWell(
+          onTap: () {
+            widget.onPressedCard?.call();
+            if (widget.type != 'repo') {
+              _toggleValue();
+            }
+          },
+          child: Card(
+            margin: EdgeInsets.symmetric(vertical: 5, horizontal: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            color: color,
+            elevation: 4,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              child: Column(
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ValueListenableBuilder<String>(
-                          valueListenable: widget.titleNtf,
-                          builder: (context, value, _) {
-                            return Text(
-                              value,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              softWrap: true,
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 2,
-                            );
-                          },
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            ValueListenableBuilder<String>(
+                              valueListenable: widget.titleNtf,
+                              builder: (context, value, _) {
+                                return Text(
+                                  value,
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  softWrap: true,
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 2,
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 8),
+                            ValueListenableBuilder<String>(
+                              valueListenable: widget.subtitleNtf,
+                              builder: (context, value, _) {
+                                return Text(
+                                  value,
+                                  style:
+                                      widget.type == 'cont'
+                                          ? TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w800,
+                                          )
+                                          : const TextStyle(
+                                            fontSize: 14,
+                                            color: Colors.grey,
+                                          ),
+                                  softWrap: true,
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 3,
+                                );
+                              },
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 8),
-                        ValueListenableBuilder<String>(
-                          valueListenable: widget.subtitleNtf,
-                          builder: (context, value, _) {
-                            return Text(
-                              value,
-                              style:
-                                  widget.type == 'cont'
-                                      ? TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w800,
-                                      )
-                                      : const TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.grey,
-                                      ),
-                              softWrap: true,
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 3,
-                            );
-                          },
-                        ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(width: 8),
+                      widget.doAnythingUp ?? const SizedBox.shrink(),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  widget.doAnythingUp ?? const SizedBox.shrink(),
-                ],
-              ),
 
-              ValueListenableBuilder<bool>(
-                valueListenable: isExpandedNotifier,
-                builder: (context, isExpanded, child) {
-                  return AnimatedSize(
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
-                    alignment: Alignment.topRight,
-                    child:
-                        isExpanded &&
-                                (widget.descNtf != null ||
-                                    widget.onPressedDel != null ||
-                                    widget.onPressedEdit != null) &&
-                                widget.type != 'repo'
-                            ? Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 0.0,
-                                vertical: 10.0,
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  widget.descNtf != null
-                                      ? descExpand()
-                                      : const SizedBox.shrink(),
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
+                  ValueListenableBuilder<bool>(
+                    valueListenable: isExpandedNotifier,
+                    builder: (context, isExpanded, child) {
+                      return AnimatedSize(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                        alignment: Alignment.topRight,
+                        child:
+                            isExpanded &&
+                                    (widget.descNtf != null ||
+                                        widget.onPressedDel != null ||
+                                        widget.onPressedEdit != null) &&
+                                    widget.type != 'repo'
+                                ? Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 0.0,
+                                    vertical: 10.0,
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      widget.doAnythingDown ??
-                                          const SizedBox.shrink(),
+                                      widget.descNtf != null
+                                          ? descExpand()
+                                          : const SizedBox.shrink(),
                                       Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
                                         children: [
-                                          widget.onPressedEdit != null
-                                              ? editButton()
-                                              : const SizedBox.shrink(),
-                                          const SizedBox(width: 4),
-                                          widget.onPressedDel != null
-                                              ? deleteButton()
-                                              : const SizedBox.shrink(),
+                                          widget.doAnythingDown ??
+                                              const SizedBox.shrink(),
+                                          Row(
+                                            children: [
+                                              widget.onPressedEdit != null
+                                                  ? editButton()
+                                                  : const SizedBox.shrink(),
+                                              const SizedBox(width: 4),
+                                              widget.onPressedDel != null
+                                                  ? deleteButton()
+                                                  : const SizedBox.shrink(),
+                                            ],
+                                          ),
                                         ],
                                       ),
                                     ],
                                   ),
-                                ],
-                              ),
-                            )
-                            : const SizedBox.shrink(),
-                  );
-                },
+                                )
+                                : const SizedBox.shrink(),
+                      );
+                    },
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

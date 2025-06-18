@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:organyz/database_helper.dart';
 import 'package:organyz/itens/itemcard.dart';
 import 'package:organyz/itens/popup.dart';
+import 'package:organyz/itens/popuplist.dart';
 import 'package:organyz/layouts/quests.dart';
 import 'package:organyz/themes.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -16,6 +17,7 @@ class _PendantPageState extends State<PendantPage> {
   late final ValueNotifier<DateTime> _focusedDay;
   late final ValueNotifier<DateTime> _selectedDay;
   List<Map<String, dynamic>> events = [];
+  final Map<int, ValueNotifier<String>> taskMap = {};
 
   @override
   void initState() {
@@ -288,62 +290,117 @@ class _PendantPageState extends State<PendantPage> {
                 child: ListView.builder(
                   itemCount: eventsActual.length,
                   itemBuilder: (context, index) {
-                    ValueNotifier<String> titleNtf = ValueNotifier<String>(
-                      eventsActual[index]['title'],
+                    final indNtf = taskMap.putIfAbsent(
+                      eventsActual[index]['ordem'],
+                      () => ValueNotifier(
+                        "${eventsActual[index]['ind']}${eventsActual[index]['title']}",
+                      ),
                     );
-                    ValueNotifier<String> subtitleNotifier =
-                        ValueNotifier<String>(eventsActual[index]['datafinal']);
+                    ValueNotifier<String> subtitleNtf = ValueNotifier<String>(
+                      eventsActual[index]['datafinal'],
+                    );
                     ValueNotifier<String> descNtf = ValueNotifier<String>(
                       eventsActual[index]['desc'],
                     );
+                    final ValueNotifier<int> stateNtf = ValueNotifier<int>(
+                      eventsActual[index]['estado'],
+                    );
+                    bool haveQuest = eventsActual[index]['porcent'] != null;
                     return ItemCard(
                       id: index,
-                      type: 'task',
-                      titleNtf: titleNtf,
+                      titleNtf: indNtf,
+                      type: eventsActual[index]['type'],
+                      subtitleNtf: subtitleNtf,
                       descNtf: descNtf,
-                      subtitleNtf: subtitleNotifier,
-                      doAnythingUp: Row(
-                        children: [
-                          ElevatedButton(
+                      doAnythingUp: ValueListenableBuilder(
+                        valueListenable: stateNtf,
+                        builder: (context, state, _) {
+                          return ElevatedButton(
                             onPressed: () async {
-                              int state = eventsActual[index]['estado'];
-                              state++;
+                              if (!haveQuest) {
+                                int newState = state + 1;
 
-                              if (state >= 3) {
-                                state = 0;
+                                if (newState >= 3) {
+                                  newState = 0;
 
-                                bool aceito = await showCustomPopup(
-                                  context,
-                                  'Reiniciar estado?',
-                                  [],
-                                );
-                                if (!aceito) {
-                                  return;
+                                  bool aceito = await showPopup(
+                                    context,
+                                    'Reiniciar estado?',
+                                    [],
+                                  );
+                                  if (!aceito) {
+                                    return;
+                                  }
                                 }
+
+                                stateNtf.value = newState;
+
+                                await DatabaseHelper().saveTask(
+                                  eventsActual[index]['id'],
+                                  newState,
+                                );
                               }
-                              await DatabaseHelper().saveTask(
-                                eventsActual[index]['id'],
-                                state,
-                              );
-                              eventsActual[index]['estado'] = state;
-                              _loadItems();
                             },
                             style: ElevatedButton.styleFrom(
                               padding: const EdgeInsets.all(4),
                               fixedSize: const Size(120, 48),
-                              backgroundColor: corState(
-                                eventsActual[index]['estado'],
-                              ),
+                              backgroundColor: corState(state),
                             ),
                             child: Text(
-                              nomeState(eventsActual[index]['estado']),
+                              haveQuest
+                                  ? "${eventsActual[index]['porcent']}%"
+                                  : nomeState(state),
                               style: TextStyle(
                                 color: Color.fromARGB(255, 242, 242, 242),
                               ),
                             ),
-                          ),
-                        ],
+                          );
+                        },
                       ),
+                      doAnythingDown:
+                          haveQuest
+                              ? ElevatedButton(
+                                onPressed: () async {
+                                  List<Map<String, dynamic>> quests =
+                                      await DatabaseHelper().getTaskQuest(
+                                        eventsActual[index]['id'],
+                                      );
+
+                                  quests =
+                                      quests.map((item) {
+                                        return {
+                                          'valor1': item['title'],
+                                          'valor2':
+                                              item['completed'] == 0
+                                                  ? '...'
+                                                  : '✓',
+                                        };
+                                      }).toList();
+
+                                  showPopupList(context, "Quests", quests, [
+                                    {
+                                      'name': 'Titulo',
+                                      'flex': 3,
+                                      'centralize': false,
+                                    },
+                                    {
+                                      'name': 'Estado',
+                                      'flex': 1,
+                                      'centralize': true,
+                                    },
+                                  ]);
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  padding: const EdgeInsets.all(4),
+                                ),
+                                child: Icon(Icons.assignment),
+                              )
+                              : SizedBox.shrink(),
+                      onPressedCard: () {
+                        eventsActual[index]['opened'] =
+                            !eventsActual[index]['opened'];
+                      },
+                      isExpanded: eventsActual[index]['opened'],
                     );
                   },
                 ),
@@ -368,7 +425,7 @@ class _PendantPageState extends State<PendantPage> {
                 ],
               ),
               child: IconButton(
-                icon: Icon(Icons.task, color: Colors.white),
+                icon: Icon(Icons.assignment, color: Colors.white),
                 onPressed: () {
                   _openQuests();
                 },

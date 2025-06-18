@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:organyz/database_helper.dart';
 import 'package:intl/intl.dart';
 
-Future<bool> showCustomPopup(
+Future<bool> showPopup(
   BuildContext context,
   String label,
   List<Map<String, dynamic>> fieldLabels, {

@@ -2,7 +2,7 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:organyz/main.dart';
-import 'package:organyz/itens/popuphistory.dart';
+import 'package:organyz/itens/popuplist.dart';
 import 'package:organyz/themes.dart';
 import '../itens/itemcard.dart';
 import '../database_helper.dart';
@@ -129,7 +129,7 @@ class _repositoryPageState extends State<Repo> {
       type: item['type'],
       subtitleNtf: subtitleNtf,
       onPressedDel: () async {
-        bool aceito = await showCustomPopup(context, 'Deletar link?', []);
+        bool aceito = await showPopup(context, 'Deletar link?', []);
         if (!aceito) {
           return;
         }
@@ -153,7 +153,7 @@ class _repositoryPageState extends State<Repo> {
         ],
       ),
       onPressedEdit: () async {
-        showCustomPopup(
+        showPopup(
           context,
           'Editar Link',
           [
@@ -204,7 +204,7 @@ class _repositoryPageState extends State<Repo> {
       labelNtf: titleNtf,
       controller: TextEditingController(text: item['desc'] ?? ''),
       onPressedDel: () async {
-        bool aceito = await showCustomPopup(context, 'Deletar nota?', []);
+        bool aceito = await showPopup(context, 'Deletar nota?', []);
         if (!aceito) {
           return;
         }
@@ -220,7 +220,7 @@ class _repositoryPageState extends State<Repo> {
         DatabaseHelper().saveNote(item['id'], text);
       },
       onPressedEdit: () async {
-        showCustomPopup(
+        showPopup(
           context,
           'Editar Nota',
           [
@@ -256,9 +256,18 @@ class _repositoryPageState extends State<Repo> {
     final ValueNotifier<String> descNtf = ValueNotifier<String>(item['desc']);
     final ValueNotifier<int> stateNtf = ValueNotifier<int>(item['estado']);
 
-    bool haveQuest = false;
+    bool eAntiga = DateFormat(
+      'dd/MM/yyyy',
+    ).parse(item['datafinal']).isAfter(DateTime.now());
 
-    haveQuest = item['porcent'] != null;
+    final ValueNotifier<Color> colorNtf = ValueNotifier<Color>(
+      eAntiga
+          ? Theme.of(context).cardTheme.color ?? Colors.white
+          : Color.fromARGB(255, 228, 210, 210),
+    );
+
+    bool haveQuest = item['porcent'] != null;
+
     return ItemCard(
       key: ValueKey('${item['id']}_${indNtf.value}'),
       id: index,
@@ -266,8 +275,9 @@ class _repositoryPageState extends State<Repo> {
       type: item['type'],
       subtitleNtf: subtitleNtf,
       descNtf: descNtf,
+      colorNtf: colorNtf,
       onPressedDel: () async {
-        bool aceito = await showCustomPopup(context, 'Deletar tarefa?', []);
+        bool aceito = await showPopup(context, 'Deletar tarefa?', []);
         if (!aceito) {
           return;
         }
@@ -284,13 +294,13 @@ class _repositoryPageState extends State<Repo> {
         builder: (context, state, _) {
           return ElevatedButton(
             onPressed: () async {
-              if (haveQuest) {
+              if (!haveQuest) {
                 int newState = state + 1;
 
                 if (newState >= 3) {
                   newState = 0;
 
-                  bool aceito = await showCustomPopup(
+                  bool aceito = await showPopup(
                     context,
                     'Reiniciar estado?',
                     [],
@@ -317,8 +327,34 @@ class _repositoryPageState extends State<Repo> {
           );
         },
       ),
+      doAnythingDown:
+          haveQuest
+              ? ElevatedButton(
+                onPressed: () async {
+                  List<Map<String, dynamic>> quests = await DatabaseHelper()
+                      .getTaskQuest(item['id']);
+
+                  quests =
+                      quests.map((item) {
+                        return {
+                          'valor1': item['title'],
+                          'valor2': item['completed'] == 0 ? '...' : '✓',
+                        };
+                      }).toList();
+
+                  showPopupList(context, "Quests", quests, [
+                    {'name': 'Titulo', 'flex': 3, 'centralize': false},
+                    {'name': 'Estado', 'flex': 1, 'centralize': true},
+                  ]);
+                },
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.all(4),
+                ),
+                child: Icon(Icons.assignment),
+              )
+              : SizedBox.shrink(),
       onPressedEdit: () async {
-        showCustomPopup(
+        showPopup(
           context,
           'Editar Tarefa',
           [
@@ -388,7 +424,7 @@ class _repositoryPageState extends State<Repo> {
       type: item['type'],
       subtitleNtf: subtitleNtf,
       onPressedDel: () async {
-        bool aceito = await showCustomPopup(context, 'Deletar contagem?', []);
+        bool aceito = await showPopup(context, 'Deletar contagem?', []);
         if (!aceito) {
           return;
         }
@@ -423,7 +459,7 @@ class _repositoryPageState extends State<Repo> {
               if (cont > contMax) {
                 cont = contMin;
 
-                bool aceito = await showCustomPopup(
+                bool aceito = await showPopup(
                   context,
                   'Reiniciar contagem?',
                   [],
@@ -465,7 +501,20 @@ class _repositoryPageState extends State<Repo> {
               List<Map<String, dynamic>> history = await DatabaseHelper()
                   .getHistoryCont(item['id']);
 
-              showPopupHistory(context, 'Histórico', history);
+              history =
+                  history.map((item) {
+                    return {
+                      'valor1': item['contAtual'],
+                      'valor2': item['direcao'],
+                      'valor3': item['datadacontagem'],
+                    };
+                  }).toList();
+
+              showPopupList(context, 'Histórico', history, [
+                {'name': 'Cont', 'flex': 1, 'centralize': true},
+                {'name': 'Tipo', 'flex': 2, 'centralize': true},
+                {'name': 'Tempo', 'flex': 3, 'centralize': true},
+              ]);
             },
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -475,7 +524,7 @@ class _repositoryPageState extends State<Repo> {
         ],
       ),
       onPressedEdit: () async {
-        showCustomPopup(
+        showPopup(
           context,
           'Editar Contagem',
           [
@@ -630,7 +679,7 @@ class _repositoryPageState extends State<Repo> {
         actions: [
           ElevatedButton(
             onPressed: () async {
-              showCustomPopup(
+              showPopup(
                 context,
                 'Editar Repositorio',
                 [
@@ -785,7 +834,7 @@ class _repositoryPageState extends State<Repo> {
                 ),
 
               buildAnimatedButton(270, Icons.public, () async {
-                showCustomPopup(
+                showPopup(
                   context,
                   'Adicionar Link',
                   [
@@ -810,7 +859,7 @@ class _repositoryPageState extends State<Repo> {
                 );
               }),
               buildAnimatedButton(210, Icons.sticky_note_2, () async {
-                showCustomPopup(
+                showPopup(
                   context,
                   'Adicionar Nota',
                   [
@@ -833,7 +882,7 @@ class _repositoryPageState extends State<Repo> {
                 );
               }),
               buildAnimatedButton(150, Icons.task_rounded, () async {
-                showCustomPopup(
+                showPopup(
                   context,
                   'Adicionar Tarefa',
                   [
@@ -861,7 +910,7 @@ class _repositoryPageState extends State<Repo> {
                 );
               }),
               buildAnimatedButton(90, Icons.plus_one_rounded, () async {
-                showCustomPopup(
+                showPopup(
                   context,
                   'Adicionar Contagem',
                   [

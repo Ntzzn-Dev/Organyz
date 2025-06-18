@@ -358,7 +358,7 @@ class DatabaseHelper {
 
     result =
         result.map((item) {
-          return {...item};
+          return {...item, 'type': 'task', 'opened': false};
         }).toList();
 
     for (Map<String, dynamic> task in result) {
@@ -367,6 +367,10 @@ class DatabaseHelper {
       String formattedDate = DateFormat('dd/MM/yyyy').format(datafinal);
       task['datafinal'] = formattedDate;
     }
+
+    criarIndice(result);
+
+    criarPercent(result);
 
     return result;
   }
@@ -453,6 +457,16 @@ class DatabaseHelper {
       where: 'id = ?',
       whereArgs: [id],
     );
+  }
+
+  Future<List<Map<String, dynamic>>> getTaskQuest(int idtask) async {
+    final db = await database;
+    List<Map<String, dynamic>> result = await db.query(
+      'tasks_quests',
+      where: 'idtask = ?',
+      whereArgs: [idtask],
+    );
+    return result;
   }
 
   Future<int> insertTaskQuest(
@@ -717,6 +731,17 @@ class DatabaseHelper {
 
     criarIndice(tasks);
 
+    criarPercent(tasks);
+
+    List<Map<String, dynamic>> all = [...links, ...notes, ...tasks, ...conts];
+
+    all.sort((a, b) => (a['ordem'] as int).compareTo(b['ordem'] as int));
+
+    return all;
+  }
+
+  void criarPercent(List<Map<String, dynamic>> tasks) async {
+    final db = await database;
     List<Map<String, dynamic>> quests = await db.query('tasks_quests');
 
     quests =
@@ -741,12 +766,6 @@ class DatabaseHelper {
         task['porcent'] = porcentagem;
       }
     }
-
-    List<Map<String, dynamic>> all = [...links, ...notes, ...tasks, ...conts];
-
-    all.sort((a, b) => (a['ordem'] as int).compareTo(b['ordem'] as int));
-
-    return all;
   }
 
   void criarIndice(List<Map<String, dynamic>> tasks) {

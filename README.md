@@ -63,3 +63,9 @@ Indicado para uma melhor organização de links ou tarefas importantes.
 - Exclusão de quests individualmente.  
 - Reordenação das quests consertado.  
 - Edição direta do titulo e descrição das quests.  
+
+### version 7.2  
+- Correção da troca de estado manual de tasks.  
+- Alteração do popup de listagem de informações.  
+- Adição da visualização de quests da task clicada, por um popup.  
+- Agora a cor do card de tasks que ja passaram da data limite mudam de cor para destacar.  

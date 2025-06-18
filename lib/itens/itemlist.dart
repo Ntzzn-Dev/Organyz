@@ -39,10 +39,6 @@ class ItemList extends StatefulWidget {
 class _ItemListState extends State<ItemList> {
   ValueNotifier<bool> isExpandedNotifier = ValueNotifier<bool>(false);
 
-  void _toggleValue() {
-    isExpandedNotifier.value = !isExpandedNotifier.value;
-  }
-
   ElevatedButton deleteButton() {
     return ElevatedButton(
       onPressed: widget.onPressedDel,

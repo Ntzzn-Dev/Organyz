@@ -118,7 +118,7 @@ class _HomePageState extends State<HomePage> {
         children: [
           ElevatedButton(
             onPressed: () async {
-              bool aceito = await showCustomPopup(
+              bool aceito = await showPopup(
                 context,
                 'Deletar repositório?',
                 [],
@@ -184,7 +184,7 @@ class _HomePageState extends State<HomePage> {
           SizedBox(width: 5),
           ElevatedButton(
             onPressed: () async {
-              showCustomPopup(
+              showPopup(
                 context,
                 'Importar repositório',
                 [
@@ -234,7 +234,7 @@ class _HomePageState extends State<HomePage> {
                 Spacer(),
                 ElevatedButton(
                   onPressed: () async {
-                    showCustomPopup(
+                    showPopup(
                       context,
                       'Adicionar Repositório',
                       [

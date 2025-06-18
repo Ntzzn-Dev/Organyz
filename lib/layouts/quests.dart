@@ -103,7 +103,7 @@ class _QuestsPageState extends State<QuestsPage> {
               ),
               colorNtf: colorNtf,
               onPressedCard: () {
-                showCustomPopup(
+                showPopup(
                   context,
                   'Editar Etapa',
                   [
@@ -208,7 +208,7 @@ class _QuestsPageState extends State<QuestsPage> {
           children: [
             ElevatedButton(
               onPressed: () {
-                showCustomPopup(
+                showPopup(
                   context,
                   'Adicionar Etapa',
                   [
