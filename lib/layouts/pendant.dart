@@ -16,28 +16,15 @@ class PendantPage extends StatefulWidget {
 }
 
 class _PendantPageState extends State<PendantPage> {
-  final GlobalKey _listViewKey = GlobalKey();
   late final ValueNotifier<DateTime> _focusedDay;
   late final ValueNotifier<DateTime> _selectedDay;
   List<Map<String, dynamic>> events = [];
+  List<Map<String, dynamic>> eventsActual = [];
   final Map<int, ValueNotifier<String>> taskMap = {};
-  double bglh = 0;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final context = _listViewKey.currentContext;
-      if (context != null) {
-        final box = context.findRenderObject() as RenderBox;
-        final position = box.localToGlobal(Offset.zero);
-        log('Top do ListView: ${position.dy}');
-        setState(() {
-          bglh = position.dy - 80;
-        });
-      }
-    });
-
     _loadItems();
     _focusedDay = ValueNotifier(DateTime.now());
     _selectedDay = ValueNotifier(DateTime.now());
@@ -52,6 +39,7 @@ class _PendantPageState extends State<PendantPage> {
 
   Future<void> _loadItems() async {
     events = await DatabaseHelper().getTasks();
+    _atualizarEventos();
     setState(() {});
   }
 
@@ -62,7 +50,9 @@ class _PendantPageState extends State<PendantPage> {
         builder: (context) => QuestsPage(),
         settings: RouteSettings(name: 'questspg'),
       ),
-    );
+    ).then((_) {
+      _loadItems();
+    });
   }
 
   bool _isEventDay(DateTime day) {
@@ -150,7 +140,22 @@ class _PendantPageState extends State<PendantPage> {
     }
   }
 
-  List<Map<String, dynamic>> eventsActual = [];
+  void _atualizarEventos() {
+    setState(() {
+      final selected = _selectedDay.value;
+
+      final eventoDoDia =
+          events.where((evento) {
+            final datafinal = DateFormat(
+              'dd/MM/yyyy',
+            ).parse(evento['datafinal']);
+            return DateTime(datafinal.year, datafinal.month, datafinal.day) ==
+                DateTime(selected.year, selected.month, selected.day);
+          }).toList();
+
+      eventsActual = eventoDoDia;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -181,27 +186,9 @@ class _PendantPageState extends State<PendantPage> {
                   setState(() {
                     _selectedDay.value = selectedDay;
                     _focusedDay.value = focusedDay;
-
-                    final eventoDoDia =
-                        events.where((evento) {
-                          DateTime datafinal = DateFormat(
-                            'dd/MM/yyyy',
-                          ).parse(evento['datafinal']);
-
-                          DateTime dataSelected = DateTime(
-                            selectedDay.year,
-                            selectedDay.month,
-                            selectedDay.day,
-                          );
-                          return datafinal == dataSelected;
-                        }).toList();
-
-                    if (eventoDoDia.isNotEmpty) {
-                      eventsActual = eventoDoDia;
-                    } else {
-                      eventsActual = [];
-                    }
                   });
+
+                  _atualizarEventos();
                 },
                 onPageChanged: (focusedDay) {
                   _focusedDay.value = focusedDay;
@@ -434,7 +421,7 @@ class _PendantPageState extends State<PendantPage> {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: Theme.of(context).cardTheme.color,
                           borderRadius: BorderRadius.only(
                             topLeft: Radius.circular(0),
                             topRight: Radius.circular(10),
@@ -527,6 +514,7 @@ class _PendantPageState extends State<PendantPage> {
                     ],
                   ),
                   onPressed: () async {
+                    /*
                     if (!await showPopup(
                       context,
                       'Deletar tarefas concluídas?',
@@ -541,7 +529,8 @@ class _PendantPageState extends State<PendantPage> {
 
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('Tasks concluídas deletadas')),
-                    );
+                    );*/
+                    _loadItems();
                   },
                 ),
                 Container(

@@ -262,7 +262,7 @@ class _repositoryPageState extends State<Repo> {
     final ValueNotifier<Color> colorNtf = ValueNotifier<Color>(
       eAntiga
           ? Theme.of(context).cardTheme.color ?? Colors.white
-          : Color.fromARGB(255, 228, 210, 210),
+          : Theme.of(context).extension<CustomColors>()!.vermelhoBaixo,
     );
 
     bool haveQuest = item['porcent'] != null;

@@ -47,9 +47,7 @@ class _QuestsPageState extends State<QuestsPage> {
       quest['completed'],
     );
 
-    if (quest['completed']) {
-      onComplete(true);
-    }
+    onComplete(quest['completed']);
 
     return ValueListenableBuilder<bool>(
       key: ValueKey('${quest['id']}_${quest['title']}'),
@@ -189,11 +187,6 @@ class _QuestsPageState extends State<QuestsPage> {
         item['opened'] = !item['opened'];
       },
       ordemWidgets: (ids) async {
-        log('reordenado');
-        for (int i = 0; i < ids.length; i++) {
-          final id = ids[i];
-          log(id.toString());
-        }
         await DatabaseHelper().setOrdemTaskQuest(ids);
       },
       isExpanded: item['opened'],

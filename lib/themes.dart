@@ -107,6 +107,7 @@ ThemeData lighttheme(Color corPrimaria) {
         months: Color.fromARGB(255, 190, 144, 84),
         weekends: Color.fromARGB(255, 139, 120, 85),
         corBase: Color.fromARGB(255, 242, 242, 242),
+        vermelhoBaixo: Color.fromARGB(255, 228, 210, 210),
       ),
     ],
   );
@@ -175,6 +176,7 @@ ThemeData darkTheme(Color corPrimaria) {
         months: Color.fromARGB(255, 190, 144, 84),
         weekends: Color.fromARGB(255, 139, 120, 85),
         corBase: Color.fromARGB(255, 64, 64, 64),
+        vermelhoBaixo: Color.fromARGB(255, 59, 53, 53),
       ),
     ],
   );
@@ -193,6 +195,7 @@ class CustomColors extends ThemeExtension<CustomColors> {
   final Color months;
   final Color weekends;
   final Color corBase;
+  final Color vermelhoBaixo;
 
   const CustomColors({
     required this.iniciado,
@@ -206,6 +209,7 @@ class CustomColors extends ThemeExtension<CustomColors> {
     required this.months,
     required this.weekends,
     required this.corBase,
+    required this.vermelhoBaixo,
   });
 
   @override
@@ -224,6 +228,7 @@ class CustomColors extends ThemeExtension<CustomColors> {
     Color? months,
     Color? weekends,
     Color? corBase,
+    Color? vermelhoBaixo,
   }) {
     return CustomColors(
       iniciado: iniciado ?? this.iniciado,
@@ -237,6 +242,7 @@ class CustomColors extends ThemeExtension<CustomColors> {
       months: months ?? this.months,
       weekends: weekends ?? this.weekends,
       corBase: corBase ?? this.corBase,
+      vermelhoBaixo: vermelhoBaixo ?? this.vermelhoBaixo,
     );
   }
 
@@ -256,6 +262,7 @@ class CustomColors extends ThemeExtension<CustomColors> {
       months: Color.lerp(months, other.months, t)!,
       weekends: Color.lerp(weekends, other.weekends, t)!,
       corBase: Color.lerp(corBase, other.corBase, t)!,
+      vermelhoBaixo: Color.lerp(vermelhoBaixo, other.vermelhoBaixo, t)!,
     );
   }
 }

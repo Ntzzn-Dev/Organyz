@@ -8,7 +8,7 @@
 
 ## Descrição  
 
-Um aplicativo para Android que te permite fazer anotações e marcações importantes, com facilidade de exclusão pós finalização.  
+Um aplicativo para Android que te permite fazer anotações e marcações importantes.  
 Indicado para uma melhor organização de links ou tarefas importantes.  
 
 ## Log de versões  
@@ -75,3 +75,9 @@ Indicado para uma melhor organização de links ou tarefas importantes.
 - Correção dos popups (titulo em negrito, titulo e botões centralizados).  
 - Adição do delete de tasks extraviadas (por tempo e por conclusão).  
 - Melhorada no visual da tela de Pendências.  
+
+### version 7.4  
+- Correção da cor de acordo com tema.  
+- Correção do tamanho dos cards.  
+- Correção task aparecendo 'no quests'.  
+- Correção tasks desatualizadas ao voltar de quests.  

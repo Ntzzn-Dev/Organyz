@@ -130,7 +130,7 @@ class _ItemCardState extends State<ItemCard> {
             }
           },
           child: Card(
-            margin: EdgeInsets.symmetric(vertical: 5, horizontal: 16),
+            margin: EdgeInsets.symmetric(vertical: 5, horizontal: 10),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),

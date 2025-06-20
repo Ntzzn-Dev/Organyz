@@ -260,7 +260,10 @@ class _HomePageState extends State<HomePage> {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 38,
+                      vertical: 18,
+                    ),
                   ),
                   child: Row(
                     children: [
@@ -276,7 +279,10 @@ class _HomePageState extends State<HomePage> {
                     _openCalendar();
                   },
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 38,
+                      vertical: 18,
+                    ),
                   ),
                   child: Row(
                     children: [
