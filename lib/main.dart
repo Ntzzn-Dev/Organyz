@@ -37,7 +37,7 @@ class MyApp extends StatelessWidget {
           supportedLocales: const [Locale('pt', 'BR')],
           locale: const Locale('pt', 'BR'),
           debugShowCheckedModeBanner: false,
-          title: 'Lista de Itens',
+          title: 'Organyz',
           theme: lighttheme(primary),
           darkTheme: darkTheme(primary),
           themeMode: ThemeMode.system,
@@ -154,7 +154,10 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Organyz'),
+        title: const Text(
+          'Organyz',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         actions: [
           ElevatedButton(
             onPressed: () async {
@@ -259,7 +262,13 @@ class _HomePageState extends State<HomePage> {
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.all(20),
                   ),
-                  child: const Text('Add Repositório'),
+                  child: Row(
+                    children: [
+                      Icon(Icons.add),
+                      const SizedBox(width: 8),
+                      Text('Repositório'),
+                    ],
+                  ),
                 ),
                 Spacer(),
                 ElevatedButton(
@@ -269,7 +278,13 @@ class _HomePageState extends State<HomePage> {
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.all(20),
                   ),
-                  child: const Text('Pendências'),
+                  child: Row(
+                    children: [
+                      Icon(Icons.calendar_month),
+                      const SizedBox(width: 8),
+                      Text('Pendências'),
+                    ],
+                  ),
                 ),
                 Spacer(),
               ],

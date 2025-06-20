@@ -69,3 +69,9 @@ Indicado para uma melhor organização de links ou tarefas importantes.
 - Alteração do popup de listagem de informações.  
 - Adição da visualização de quests da task clicada, por um popup.  
 - Agora a cor do card de tasks que ja passaram da data limite mudam de cor para destacar.  
+
+### version 7.3
+- Correção da edição de titulo das tasks.  
+- Correção dos popups (titulo em negrito, titulo e botões centralizados).  
+- Adição do delete de tasks extraviadas (por tempo e por conclusão).  
+- Melhorada no visual da tela de Pendências.  

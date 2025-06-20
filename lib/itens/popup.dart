@@ -59,10 +59,15 @@ Future<bool> showPopup(
       return StatefulBuilder(
         builder: (context, setState) {
           return AlertDialog(
-            title: Center(child: Text(label)),
+            title: Text(
+              label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: List.generate(fieldLabels.length, (index) {
                   int tipoFormatacao =
                       fieldLabels[index]['type'].toLowerCase().contains('data')
@@ -252,136 +257,160 @@ Future<bool> showPopup(
                 }),
               ),
             ),
+            contentPadding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+            actionsPadding: const EdgeInsets.only(
+              top: 0,
+              right: 16,
+              bottom: 12,
+              left: 16,
+            ),
             actions: [
-              ElevatedButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                style: ElevatedButton.styleFrom(foregroundColor: Colors.red),
-                child: const Text('Cancelar'),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  bool dataEValida(String dataStr) {
-                    try {
-                      DateFormat format = DateFormat('dd/MM/yyyy');
-                      format.parseStrict(dataStr);
-                      return true;
-                    } catch (e) {
-                      return false;
-                    }
-                  }
+              Row(
+                mainAxisSize: MainAxisSize.max,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    style: ElevatedButton.styleFrom(
+                      foregroundColor: Colors.red,
+                    ),
+                    child: const Text('Cancelar'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () async {
+                      bool dataEValida(String dataStr) {
+                        try {
+                          DateFormat format = DateFormat('dd/MM/yyyy');
+                          format.parseStrict(dataStr);
+                          return true;
+                        } catch (e) {
+                          return false;
+                        }
+                      }
 
-                  final values =
-                      controllers.map((controller) => controller.text).toList();
+                      final values =
+                          controllers
+                              .map((controller) => controller.text)
+                              .toList();
 
-                  List<int> matchingIndicesData = [];
-                  List<int> matchingIndicesTitle = [];
-                  List<int> matchingIndicesHex = [];
-                  List<int> matchingIndicesNecessarys = [];
+                      List<int> matchingIndicesData = [];
+                      List<int> matchingIndicesTitle = [];
+                      List<int> matchingIndicesHex = [];
+                      List<int> matchingIndicesNecessarys = [];
 
-                  for (var entry in fieldLabels.asMap().entries) {
-                    final index = entry.key;
-                    final type = entry.value['type'].toLowerCase();
+                      for (var entry in fieldLabels.asMap().entries) {
+                        final index = entry.key;
+                        final type = entry.value['type'].toLowerCase();
 
-                    if (type.contains('data')) matchingIndicesData.add(index);
-                    if (type.contains('title')) matchingIndicesTitle.add(index);
-                    if (type.contains('hex')) matchingIndicesHex.add(index);
-                    if (type.contains('necessary'))
-                      matchingIndicesNecessarys.add(index);
-                  }
+                        if (type.contains('data')) {
+                          matchingIndicesData.add(index);
+                        }
+                        if (type.contains('title')) {
+                          matchingIndicesTitle.add(index);
+                        }
+                        if (type.contains('hex')) {
+                          matchingIndicesHex.add(index);
+                        }
+                        if (type.contains('necessary')) {
+                          matchingIndicesNecessarys.add(index);
+                        }
+                      }
 
-                  bool hasAnyError = false;
+                      bool hasAnyError = false;
 
-                  for (int i in matchingIndicesData) {
-                    String digitsOnly = values[i].replaceAll(
-                      RegExp(r'[^0-9]'),
-                      '',
-                    );
-                    if (digitsOnly.length < 8 || !dataEValida(values[i])) {
-                      setState(() {
-                        hasError[i] = true;
-                      });
-                      hasAnyError = true;
-                    } else {
-                      setState(() {
-                        hasError[i] = false;
-                      });
-                    }
-                  }
+                      for (int i in matchingIndicesData) {
+                        String digitsOnly = values[i].replaceAll(
+                          RegExp(r'[^0-9]'),
+                          '',
+                        );
+                        if (digitsOnly.length < 8 || !dataEValida(values[i])) {
+                          setState(() {
+                            hasError[i] = true;
+                          });
+                          hasAnyError = true;
+                        } else {
+                          setState(() {
+                            hasError[i] = false;
+                          });
+                        }
+                      }
 
-                  for (int i in matchingIndicesTitle) {
-                    String tituloEscolhido = values[i];
-                    if (tituloEscolhido.trim() !=
-                        (await DatabaseHelper().verifyTitle(
-                          tituloEscolhido,
-                          'repository',
-                          currentId: fieldLabels[i]['id'],
-                        )).trim()) {
-                      setState(() {
-                        hasError[i] = true;
-                      });
-                      hasAnyError = true;
-                    } else if (tituloEscolhido == "" ||
-                        tituloEscolhido.isEmpty) {
-                      setState(() {
-                        hasError[i] = true;
-                      });
-                      hasAnyError = true;
-                    } else {
-                      setState(() {
-                        hasError[i] = false;
-                      });
-                    }
-                  }
+                      for (int i in matchingIndicesTitle) {
+                        String tituloEscolhido = values[i];
+                        if (tituloEscolhido.trim() !=
+                            (await DatabaseHelper().verifyTitle(
+                              tituloEscolhido,
+                              'repository',
+                              currentId: fieldLabels[i]['id'],
+                            )).trim()) {
+                          setState(() {
+                            hasError[i] = true;
+                          });
+                          hasAnyError = true;
+                        } else if (tituloEscolhido == "" ||
+                            tituloEscolhido.isEmpty) {
+                          setState(() {
+                            hasError[i] = true;
+                          });
+                          hasAnyError = true;
+                        } else {
+                          setState(() {
+                            hasError[i] = false;
+                          });
+                        }
+                      }
 
-                  for (int i in matchingIndicesHex) {
-                    String hexOnly = values[i].replaceAll(
-                      RegExp(r'[^0-9a-fA-F]'),
-                      '',
-                    );
-                    if (hexOnly.isNotEmpty && hexOnly.length < 6) {
-                      setState(() {
-                        hasError[i] = true;
-                      });
-                      hasAnyError = true;
-                    } else {
-                      setState(() {
-                        hasError[i] = false;
-                      });
-                    }
-                    values[i] = values[i].replaceAll(
-                      RegExp(r'[^0-9a-fA-F]'),
-                      '',
-                    );
-                  }
+                      for (int i in matchingIndicesHex) {
+                        String hexOnly = values[i].replaceAll(
+                          RegExp(r'[^0-9a-fA-F]'),
+                          '',
+                        );
+                        if (hexOnly.isNotEmpty && hexOnly.length < 6) {
+                          setState(() {
+                            hasError[i] = true;
+                          });
+                          hasAnyError = true;
+                        } else {
+                          setState(() {
+                            hasError[i] = false;
+                          });
+                        }
+                        values[i] = values[i].replaceAll(
+                          RegExp(r'[^0-9a-fA-F]'),
+                          '',
+                        );
+                      }
 
-                  for (int i in matchingIndicesNecessarys) {
-                    String tituloEscolhido = values[i];
-                    if (tituloEscolhido == "" || tituloEscolhido.isEmpty) {
-                      setState(() {
-                        hasError[i] = true;
-                      });
-                      hasAnyError = true;
-                    } else {
-                      setState(() {
-                        hasError[i] = false;
-                      });
-                    }
-                  }
+                      for (int i in matchingIndicesNecessarys) {
+                        String tituloEscolhido = values[i];
+                        if (tituloEscolhido == "" || tituloEscolhido.isEmpty) {
+                          setState(() {
+                            hasError[i] = true;
+                          });
+                          hasAnyError = true;
+                        } else {
+                          setState(() {
+                            hasError[i] = false;
+                          });
+                        }
+                      }
 
-                  if (hasAnyError) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Corrija os campos')),
-                    );
-                    return;
-                  }
+                      if (hasAnyError) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Corrija os campos')),
+                        );
+                        return;
+                      }
 
-                  if (onConfirm != null) {
-                    onConfirm(values);
-                  }
+                      if (onConfirm != null) {
+                        onConfirm(values);
+                      }
 
-                  Navigator.of(context).pop(true);
-                },
-                child: const Text('Confirmar'),
+                      Navigator.of(context).pop(true);
+                    },
+                    child: const Text('Confirmar'),
+                  ),
+                ],
               ),
             ],
           );

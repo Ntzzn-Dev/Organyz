@@ -108,12 +108,11 @@ class _repositoryPageState extends State<Repo> {
     });
 
     for (int i = 0; i < tasksSemelhantes.length; i++) {
-      log(tasksSemelhantes[i]['datafinal']);
-    }
-    for (int i = 0; i < tasksSemelhantes.length; i++) {
-      final item = tasksSemelhantes[i];
-      final novoIndice = '${i + 1} | $title';
-      taskMap[item['ordem']]?.value = novoIndice;
+      if (tasksSemelhantes.length > 1) {
+        final item = tasksSemelhantes[i];
+        final novoIndice = '${i + 1} | $title';
+        taskMap[item['ordem']]?.value = novoIndice;
+      }
     }
   }
 
@@ -387,7 +386,12 @@ class _repositoryPageState extends State<Repo> {
 
             item['datafinal'] = valores[2];
 
+            indNtf.value = title;
+
+            item['title'] = title;
+
             indiceTaskUpdate(title);
+
             descNtf.value = desc;
             subtitleNtf.value = DateFormat(
               "d 'de' MMMM 'de' y",
@@ -596,6 +600,7 @@ class _repositoryPageState extends State<Repo> {
                   acoes[i]();
                 },
                 style: ElevatedButton.styleFrom(
+                  elevation: btnLigado == i ? 0 : 2,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 20,
                     vertical: 10,

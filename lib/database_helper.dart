@@ -540,6 +540,22 @@ class DatabaseHelper {
     }
   }
 
+  Future<void> removeOldTasks() async {
+    final db = await database;
+    await db.delete(
+      'tasks',
+      where: '''
+      substr(datafinal, 7, 4) || '-' || substr(datafinal, 4, 2) || '-' || substr(datafinal, 1, 2) < ?
+    ''',
+      whereArgs: [DateFormat('yyyy-MM-dd').format(DateTime.now())],
+    );
+  }
+
+  Future<void> removeCompleteTasks() async {
+    final db = await database;
+    await db.delete('tasks', where: 'estado = ?', whereArgs: [2]);
+  }
+
   //CONTS =====================================================================
   Future<List<Map<String, dynamic>>> getCont(int idRepository) async {
     final db = await database;

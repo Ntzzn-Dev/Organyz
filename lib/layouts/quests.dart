@@ -64,42 +64,37 @@ class _QuestsPageState extends State<QuestsPage> {
               titleNtf: titleNtf,
               subtitleNtf: subtitleNtf,
               paddingN: {'width': 0, 'height': 3},
-              doAnythingUp: Row(
-                children: [
-                  ElevatedButton(
-                    onPressed: () async {
-                      final newValue = !completedNtf.value;
-                      onComplete(newValue);
-                      if (!removeValue) {
-                        quest['completed'] = newValue;
-                        completedNtf.value = newValue;
+              doAnythingUp: ElevatedButton(
+                onPressed: () async {
+                  final newValue = !completedNtf.value;
+                  onComplete(newValue);
+                  if (!removeValue) {
+                    quest['completed'] = newValue;
+                    completedNtf.value = newValue;
 
-                        colorNtf.value = Color.fromARGB(
-                          newValue ? 30 : 15,
-                          0,
-                          0,
-                          0,
-                        );
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.all(4),
-                      backgroundColor:
-                          removeValue
-                              ? Colors.red
-                              : completedValue
-                              ? Theme.of(
-                                context,
-                              ).extension<CustomColors>()!.concluido
-                              : null,
-                    ),
-                    child: Icon(
-                      completedValue || removeValue ? Icons.close : Icons.check,
-                      color:
-                          completedValue || removeValue ? Colors.white : null,
-                    ),
-                  ),
-                ],
+                    colorNtf.value = Color.fromARGB(
+                      newValue ? 30 : 15,
+                      0,
+                      0,
+                      0,
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.all(4),
+                  backgroundColor:
+                      removeValue
+                          ? Colors.red
+                          : completedValue
+                          ? Theme.of(
+                            context,
+                          ).extension<CustomColors>()!.concluido
+                          : null,
+                ),
+                child: Icon(
+                  completedValue || removeValue ? Icons.close : Icons.check,
+                  color: completedValue || removeValue ? Colors.white : null,
+                ),
               ),
               colorNtf: colorNtf,
               onPressedCard: () {

@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:organyz/database_helper.dart';
 import 'package:organyz/itens/itemcard.dart';
@@ -14,14 +16,28 @@ class PendantPage extends StatefulWidget {
 }
 
 class _PendantPageState extends State<PendantPage> {
+  final GlobalKey _listViewKey = GlobalKey();
   late final ValueNotifier<DateTime> _focusedDay;
   late final ValueNotifier<DateTime> _selectedDay;
   List<Map<String, dynamic>> events = [];
   final Map<int, ValueNotifier<String>> taskMap = {};
+  double bglh = 0;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final context = _listViewKey.currentContext;
+      if (context != null) {
+        final box = context.findRenderObject() as RenderBox;
+        final position = box.localToGlobal(Offset.zero);
+        log('Top do ListView: ${position.dy}');
+        setState(() {
+          bglh = position.dy - 80;
+        });
+      }
+    });
+
     _loadItems();
     _focusedDay = ValueNotifier(DateTime.now());
     _selectedDay = ValueNotifier(DateTime.now());
@@ -157,6 +173,7 @@ class _PendantPageState extends State<PendantPage> {
                 firstDay: DateTime.utc(2020, 1, 1),
                 lastDay: DateTime.utc(2030, 12, 31),
                 focusedDay: _focusedDay.value,
+                rowHeight: 40,
                 selectedDayPredicate: (day) {
                   return isSameDay(_selectedDay.value, day);
                 },
@@ -287,149 +304,269 @@ class _PendantPageState extends State<PendantPage> {
               ),
 
               Expanded(
-                child: ListView.builder(
-                  itemCount: eventsActual.length,
-                  itemBuilder: (context, index) {
-                    final indNtf = taskMap.putIfAbsent(
-                      eventsActual[index]['ordem'],
-                      () => ValueNotifier(
-                        "${eventsActual[index]['ind']}${eventsActual[index]['title']}",
-                      ),
-                    );
-                    ValueNotifier<String> subtitleNtf = ValueNotifier<String>(
-                      eventsActual[index]['datafinal'],
-                    );
-                    ValueNotifier<String> descNtf = ValueNotifier<String>(
-                      eventsActual[index]['desc'],
-                    );
-                    final ValueNotifier<int> stateNtf = ValueNotifier<int>(
-                      eventsActual[index]['estado'],
-                    );
-                    bool haveQuest = eventsActual[index]['porcent'] != null;
-                    return ItemCard(
-                      id: index,
-                      titleNtf: indNtf,
-                      type: eventsActual[index]['type'],
-                      subtitleNtf: subtitleNtf,
-                      descNtf: descNtf,
-                      doAnythingUp: ValueListenableBuilder(
-                        valueListenable: stateNtf,
-                        builder: (context, state, _) {
-                          return ElevatedButton(
-                            onPressed: () async {
-                              if (!haveQuest) {
-                                int newState = state + 1;
-
-                                if (newState >= 3) {
-                                  newState = 0;
-
-                                  bool aceito = await showPopup(
-                                    context,
-                                    'Reiniciar estado?',
-                                    [],
-                                  );
-                                  if (!aceito) {
-                                    return;
-                                  }
-                                }
-
-                                stateNtf.value = newState;
-
-                                await DatabaseHelper().saveTask(
-                                  eventsActual[index]['id'],
-                                  newState,
-                                );
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.all(4),
-                              fixedSize: const Size(120, 48),
-                              backgroundColor: corState(state),
-                            ),
-                            child: Text(
-                              haveQuest
-                                  ? "${eventsActual[index]['porcent']}%"
-                                  : nomeState(state),
-                              style: TextStyle(
-                                color: Color.fromARGB(255, 242, 242, 242),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                      doAnythingDown:
-                          haveQuest
-                              ? ElevatedButton(
+                child: Stack(
+                  children: [
+                    ListView.builder(
+                      padding: const EdgeInsets.only(top: 25, bottom: 70),
+                      itemCount: eventsActual.length,
+                      itemBuilder: (context, index) {
+                        final indNtf = taskMap.putIfAbsent(
+                          eventsActual[index]['ordem'],
+                          () => ValueNotifier(
+                            "${eventsActual[index]['ind']}${eventsActual[index]['title']}",
+                          ),
+                        );
+                        ValueNotifier<String> subtitleNtf =
+                            ValueNotifier<String>(
+                              eventsActual[index]['datafinal'],
+                            );
+                        ValueNotifier<String> descNtf = ValueNotifier<String>(
+                          eventsActual[index]['desc'],
+                        );
+                        final ValueNotifier<int> stateNtf = ValueNotifier<int>(
+                          eventsActual[index]['estado'],
+                        );
+                        bool haveQuest = eventsActual[index]['porcent'] != null;
+                        return ItemCard(
+                          id: index,
+                          titleNtf: indNtf,
+                          type: eventsActual[index]['type'],
+                          subtitleNtf: subtitleNtf,
+                          descNtf: descNtf,
+                          doAnythingUp: ValueListenableBuilder(
+                            valueListenable: stateNtf,
+                            builder: (context, state, _) {
+                              return ElevatedButton(
                                 onPressed: () async {
-                                  List<Map<String, dynamic>> quests =
-                                      await DatabaseHelper().getTaskQuest(
-                                        eventsActual[index]['id'],
+                                  if (!haveQuest) {
+                                    int newState = state + 1;
+
+                                    if (newState >= 3) {
+                                      newState = 0;
+
+                                      bool aceito = await showPopup(
+                                        context,
+                                        'Reiniciar estado?',
+                                        [],
                                       );
+                                      if (!aceito) {
+                                        return;
+                                      }
+                                    }
 
-                                  quests =
-                                      quests.map((item) {
-                                        return {
-                                          'valor1': item['title'],
-                                          'valor2':
-                                              item['completed'] == 0
-                                                  ? '...'
-                                                  : '✓',
-                                        };
-                                      }).toList();
+                                    stateNtf.value = newState;
 
-                                  showPopupList(context, "Quests", quests, [
-                                    {
-                                      'name': 'Titulo',
-                                      'flex': 3,
-                                      'centralize': false,
-                                    },
-                                    {
-                                      'name': 'Estado',
-                                      'flex': 1,
-                                      'centralize': true,
-                                    },
-                                  ]);
+                                    await DatabaseHelper().saveTask(
+                                      eventsActual[index]['id'],
+                                      newState,
+                                    );
+                                  }
                                 },
                                 style: ElevatedButton.styleFrom(
                                   padding: const EdgeInsets.all(4),
+                                  fixedSize: const Size(120, 48),
+                                  backgroundColor: corState(state),
                                 ),
-                                child: Icon(Icons.assignment),
-                              )
-                              : SizedBox.shrink(),
-                      onPressedCard: () {
-                        eventsActual[index]['opened'] =
-                            !eventsActual[index]['opened'];
+                                child: Text(
+                                  haveQuest
+                                      ? "${eventsActual[index]['porcent']}%"
+                                      : nomeState(state),
+                                  style: TextStyle(
+                                    color: Color.fromARGB(255, 242, 242, 242),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          doAnythingDown:
+                              haveQuest
+                                  ? ElevatedButton(
+                                    onPressed: () async {
+                                      List<Map<String, dynamic>> quests =
+                                          await DatabaseHelper().getTaskQuest(
+                                            eventsActual[index]['id'],
+                                          );
+
+                                      quests =
+                                          quests.map((item) {
+                                            return {
+                                              'valor1': item['title'],
+                                              'valor2':
+                                                  item['completed'] == 0
+                                                      ? '...'
+                                                      : '✓',
+                                            };
+                                          }).toList();
+
+                                      showPopupList(context, "Quests", quests, [
+                                        {
+                                          'name': 'Titulo',
+                                          'flex': 3,
+                                          'centralize': false,
+                                        },
+                                        {
+                                          'name': 'Estado',
+                                          'flex': 1,
+                                          'centralize': true,
+                                        },
+                                      ]);
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      padding: const EdgeInsets.all(4),
+                                    ),
+                                    child: Icon(Icons.assignment),
+                                  )
+                                  : SizedBox.shrink(),
+                          onPressedCard: () {
+                            eventsActual[index]['opened'] =
+                                !eventsActual[index]['opened'];
+                          },
+                          isExpanded: eventsActual[index]['opened'],
+                        );
                       },
-                      isExpanded: eventsActual[index]['opened'],
-                    );
-                  },
+                    ),
+                    Positioned(
+                      top: 0,
+                      left: 0,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(0),
+                            topRight: Radius.circular(10),
+                            bottomLeft: Radius.circular(0),
+                            bottomRight: Radius.circular(32),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black12,
+                              blurRadius: 4,
+                              offset: Offset(2, 2),
+                            ),
+                          ],
+                        ),
+                        child: const Text(
+                          'Tasks do dia:',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
           Positioned(
             bottom: 20,
-            right: 20,
-            child: Container(
-              width: 60,
-              height: 60,
-              decoration: BoxDecoration(
-                color: Theme.of(context).extension<CustomColors>()!.concluido,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 6,
-                    offset: Offset(2, 2),
+            right: 0,
+            left: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.red,
+                    textStyle: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 14,
+                      horizontal: 24,
+                    ),
                   ),
-                ],
-              ),
-              child: IconButton(
-                icon: Icon(Icons.assignment, color: Colors.white),
-                onPressed: () {
-                  _openQuests();
-                },
-              ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete, color: Colors.red),
+                      const SizedBox(width: 4),
+                      Text('Atrasados'),
+                    ],
+                  ),
+                  onPressed: () async {
+                    if (!await showPopup(
+                      context,
+                      'Deletar tarefas que ja passaram da data final?',
+                      [],
+                    )) {
+                      return;
+                    }
+
+                    await DatabaseHelper().removeOldTasks();
+
+                    _loadItems();
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Tasks antigas deletadas')),
+                    );
+                  },
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.red,
+                    textStyle: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 14,
+                      horizontal: 24,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete, color: Colors.red),
+                      const SizedBox(width: 4),
+                      Text('Concluídos'),
+                    ],
+                  ),
+                  onPressed: () async {
+                    if (!await showPopup(
+                      context,
+                      'Deletar tarefas concluídas?',
+                      [],
+                    )) {
+                      return;
+                    }
+
+                    await DatabaseHelper().removeCompleteTasks();
+
+                    _loadItems();
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Tasks concluídas deletadas')),
+                    );
+                  },
+                ),
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color:
+                        Theme.of(context).extension<CustomColors>()!.concluido,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 6,
+                        offset: Offset(2, 2),
+                      ),
+                    ],
+                  ),
+                  child: IconButton(
+                    icon: Icon(Icons.assignment, color: Colors.white, size: 20),
+                    onPressed: () {
+                      _openQuests();
+                    },
+                  ),
+                ),
+              ],
             ),
           ),
         ],
