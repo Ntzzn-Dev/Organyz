@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:organyz/database_helper.dart';
 import 'package:organyz/itens/itemcard.dart';

@@ -66,11 +66,11 @@ ThemeData lighttheme(Color corPrimaria) {
         foregroundColor: corPrimaria,
       ),
     ),
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       color: Color.fromARGB(255, 237, 237, 237),
       surfaceTintColor: Colors.transparent,
     ),
-    dialogTheme: DialogTheme(
+    dialogTheme: DialogThemeData(
       backgroundColor: Color.fromARGB(255, 242, 242, 242),
     ),
     inputDecorationTheme: InputDecorationTheme(
@@ -129,8 +129,10 @@ ThemeData darkTheme(Color corPrimaria) {
         foregroundColor: corPrimaria,
       ),
     ),
-    cardTheme: CardTheme(color: Color.fromARGB(255, 64, 64, 64)),
-    dialogTheme: DialogTheme(backgroundColor: Color.fromARGB(255, 64, 64, 64)),
+    cardTheme: CardThemeData(color: Color.fromARGB(255, 64, 64, 64)),
+    dialogTheme: DialogThemeData(
+      backgroundColor: Color.fromARGB(255, 64, 64, 64),
+    ),
 
     textTheme: ThemeData.dark().textTheme.apply(
       bodyColor: Color.fromARGB(255, 242, 242, 242),

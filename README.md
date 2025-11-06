@@ -6,78 +6,27 @@
 **Data:** 07/05/2025  
 **Natureza:** Flutter (Dart), focado em Android  
 
+![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)
+![Dart](https://img.shields.io/badge/Dart-0175C2?style=for-the-badge&logo=dart&logoColor=white)  
+![Platform](https://img.shields.io/badge/Android%20%7C%20Windows-Supported-green?style=for-the-badge)  
+
 ## Descrição  
 
 Um aplicativo para Android que te permite fazer anotações e marcações importantes.  
 Indicado para uma melhor organização de links ou tarefas importantes.  
 
-## Log de versões  
+## Tecnologias  
+- Flutter (Dart)  
+- SQLite (armazenamento local)  
 
-### version 4.2  
-- Adicionada forma de reposicionamento de elementos, tanto repositórios quanto itens internos.  
+## Contribuição
+Sinta-se à vontade para abrir issues ou sugerir melhorias!  
 
-### version 5.0  
-- Foram adicionadas a possibilidade de multilines nos títulos e descrições.  
-- Alteração nos botões de criação, um novo botão de adição que engloba os 3 foi adicionado.  
-- Sistema de filtragem de tipo de item.  
-- Substituição dos 'x' por '_' em caixas de texto que são preenchidas.  
+## Log de versões
+- **v4.0** → Adicionada forma de reposicionamento de repositórios e itens internos.
+- **v5.0** → Suporte a multilines em títulos e descrições, novo botão de adição unificado, sistema de filtragem de itens e ajustes em caixas de texto.
+- **v6.0** → Criação de contador e histórico de contagem, correções de filtros e itens vazios, otimizações no itemList e classe repository, popup de histórico, ajustes de mínimo/máximo e melhorias visuais.
+- **v7.0** → Criação e gerenciamento de quests para tasks, reorganização otimizada de elementos, etapas e porcentagens em tasks, edição e exclusão de quests, popups melhorados, destaque visual de tasks expiradas, correções de título e visual de Pendências, ajustes de cores e tamanho de cards.
+- **8.0** → Criação de um mapa com pontos de interesse pessoais, prático para verificar distancias entre lugares.
 
-### version 6.0  
-- Criação do contador.  
-- Correção da criação de itens vazios.  
-- Correção dos filtros, para evitar tamanho grande demais.  
-- Atualização do itemList, onde não há mais o onPressedOpen para um botão pré-definido com ações diferentes, agora uma row com quantos itens ou botões for necessário.  
-
-### version 6.1  
-- Atualização do itemList, retirada de duas variáveis desnecessárias, adição de tipagem.  
-- Criação do histórico de contagem, tanto para adição, subtração e reinício.  
-- Correção para a edição e delete de um contador.  
-- Mudança de mínimo e máximo mantendo o valor atual dentro do intervalo.  
-- Otimização na classe repository.  
-- Adição do popup do histórico.  
-- Correção do horário das alterações na contagem para distâncias de tempo.  
-
-### version 6.2  
-- Criação da hierarquia de Tarefas, onde elas são marcadas em ordem crescente de acordo com a data final.  
-- Correção da falta de mesclagem por diferenças em espaço.  
-- Agora os botões de adição são fechados, se o usuário não usá-los.  
-
-### version 6.3  
-- Adição de um item no histórico sempre que criado um contador.  
-- Edição do itemList sem necessidade de recarregar totalmente a árvore de widgets.  
-- Troca da cor do número das contagens.  
-
-### version 6.5  
-- Adição da ordem escrita apenas visualmente.  
-- Alteração da ordem escrita dos demais ao editar.  
-- Troca da data pelo titulo no calendario.  
-
-### version 7.0  
-- Criação das quests no banco de dados para as tasks.  
-- Reorganização dos elementos otimizada.  
-- Salva temporariamente o estado sobre estar expandido ou não.  
-- Criacao das etapas para a finalização da tarefa.  
-- Visualização em porcentagem para tasks com quests.  
-
-### version 7.1  
-- Exclusão de quests individualmente.  
-- Reordenação das quests consertado.  
-- Edição direta do titulo e descrição das quests.  
-
-### version 7.2  
-- Correção da troca de estado manual de tasks.  
-- Alteração do popup de listagem de informações.  
-- Adição da visualização de quests da task clicada, por um popup.  
-- Agora a cor do card de tasks que ja passaram da data limite mudam de cor para destacar.  
-
-### version 7.3
-- Correção da edição de titulo das tasks.  
-- Correção dos popups (titulo em negrito, titulo e botões centralizados).  
-- Adição do delete de tasks extraviadas (por tempo e por conclusão).  
-- Melhorada no visual da tela de Pendências.  
-
-### version 7.4  
-- Correção da cor de acordo com tema.  
-- Correção do tamanho dos cards.  
-- Correção task aparecendo 'no quests'.  
-- Correção tasks desatualizadas ao voltar de quests.  
+Veja o changelog completo em [CHANGELOG.md](CHANGELOG.md)

@@ -2,7 +2,6 @@ import 'dart:developer';
 
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:archive/archive.dart';
@@ -105,6 +104,19 @@ class DatabaseHelper {
             direcao TEXT,
             datadacontagem TEXT,
             FOREIGN KEY (idconts) REFERENCES conts(id) ON DELETE CASCADE
+          )
+        ''');
+
+        await db.execute('''
+          CREATE TABLE map_points (
+            idpoint INTEGER PRIMARY KEY AUTOINCREMENT,
+            desc TEXT,
+            endereco TEXT,
+            lat REAL,
+            long REAL,
+            idrepository INTEGER,
+            ordem INTEGER,
+            FOREIGN KEY (idrepository) REFERENCES repository(id) ON DELETE CASCADE
           )
         ''');
       },
@@ -399,7 +411,7 @@ class DatabaseHelper {
         : '${(newOrd.indexWhere((item) => item['id'] == -1) + 1).toString()} |';
   }
 
-  Future<void> insertTask(
+  Future<int> insertTask(
     String title,
     String desc,
     DateTime date,
@@ -410,7 +422,7 @@ class DatabaseHelper {
     final db = await database;
 
     String formattedDate = DateFormat('dd/MM/yyyy').format(date);
-    await db.insert('tasks', {
+    int idTask = await db.insert('tasks', {
       'title': title,
       'desc': desc,
       'datafinal': formattedDate,
@@ -418,6 +430,8 @@ class DatabaseHelper {
       'idrepository': idRepository,
       'ordem': ordem,
     });
+
+    return idTask;
   }
 
   Future<void> removeTask(int id) async {
@@ -473,8 +487,9 @@ class DatabaseHelper {
     String title,
     String desc,
     int idTask,
-    int ordem,
-  ) async {
+    int ordem, {
+    int? completed,
+  }) async {
     final db = await database;
 
     return await db.insert('tasks_quests', {
@@ -483,6 +498,7 @@ class DatabaseHelper {
       'completed': false,
       'idtask': idTask,
       'ordem': ordem,
+      'completed': completed,
     });
   }
 
@@ -645,6 +661,22 @@ class DatabaseHelper {
     });
   }
 
+  Future<void> insertContHistory(
+    int id,
+    String direcao,
+    int contAtual,
+    DateTime data,
+  ) async {
+    final db = await database;
+
+    await db.insert('conts_history', {
+      'idconts': id,
+      'direcao': direcao,
+      'contAtual': contAtual,
+      'datadacontagem': data,
+    });
+  }
+
   Future<void> restartCont(int id, int minCont) async {
     final db = await database;
     await db.delete('conts_history', where: 'idconts = ?', whereArgs: [id]);
@@ -695,6 +727,58 @@ class DatabaseHelper {
     return novaLista;
   }
 
+  //MAPS =====================================================================
+  Future<List<Map<String, dynamic>>> getMaps() async {
+    final db = await database;
+    List<Map<String, dynamic>> result = await db.query('map_points');
+    return result;
+  }
+
+  Future<int> insertMaps(
+    String desc,
+    String end,
+    double lat,
+    double long,
+    int idrep,
+    int ordem,
+  ) async {
+    final db = await database;
+
+    final id = await db.insert('map_points', {
+      'desc': desc,
+      'endereco': end,
+      'lat': lat,
+      'long': long,
+      'idrepository': idrep,
+      'ordem': ordem,
+    });
+
+    return id;
+  }
+
+  Future<void> removeMaps(int id) async {
+    final db = await database;
+    await db.delete('map_points', where: 'idpoint = ?', whereArgs: [id]);
+  }
+
+  Future<void> updateMaps(
+    int id,
+    String desc,
+    String end,
+    double lat,
+    double long,
+    int ordem,
+  ) async {
+    final db = await database;
+
+    await db.update(
+      'map_points',
+      {'desc': desc, 'endereco': end, 'lat': lat, 'long': long, 'ordem': ordem},
+      where: 'idpoint = ?',
+      whereArgs: [id],
+    );
+  }
+
   //REPOSITORIO ITENS =========================================================
   Future<List<Map<String, dynamic>>> getAllItemsOrdered(
     int idRepository,
@@ -725,6 +809,12 @@ class DatabaseHelper {
       whereArgs: [idRepository],
     );
 
+    List<Map<String, dynamic>> maps = await db.query(
+      'map_points',
+      where: 'idrepository = ?',
+      whereArgs: [idRepository],
+    );
+
     links =
         links.map((item) {
           return {...item, 'type': 'link', 'opened': false};
@@ -745,11 +835,22 @@ class DatabaseHelper {
           return {...item, 'type': 'cont', 'opened': false};
         }).toList();
 
+    maps =
+        maps.map((item) {
+          return {...item, 'type': 'maps', 'opened': false};
+        }).toList();
+
     criarIndice(tasks);
 
     criarPercent(tasks);
 
-    List<Map<String, dynamic>> all = [...links, ...notes, ...tasks, ...conts];
+    List<Map<String, dynamic>> all = [
+      ...links,
+      ...notes,
+      ...tasks,
+      ...conts,
+      ...maps,
+    ];
 
     all.sort((a, b) => (a['ordem'] as int).compareTo(b['ordem'] as int));
 
@@ -865,16 +966,46 @@ class DatabaseHelper {
       whereArgs: [idRepository],
     );
 
-    List<Map<String, dynamic>> tasks = await db.query(
-      'tasks',
-      where: 'idrepository = ?',
-      whereArgs: [idRepository],
+    List<Map<String, dynamic>> tasks = List<Map<String, dynamic>>.from(
+      await db.query(
+        'tasks',
+        where: 'idrepository = ?',
+        whereArgs: [idRepository],
+      ),
     );
+
+    for (int i = 0; i < tasks.length; i++) {
+      final quests = await db.query(
+        'tasks_quests',
+        where: 'idtask = ?',
+        whereArgs: [tasks[i]['id']],
+      );
+
+      tasks[i] = {...tasks[i], "quests": quests};
+    }
 
     List<Map<String, dynamic>> conts = await db.query(
       'conts',
       where: 'idrepository = ?',
       whereArgs: [idRepository],
+    );
+
+    for (int i = 0; i < conts.length; i++) {
+      final historys = await db.query(
+        'conts_history',
+        where: 'idconts = ?',
+        whereArgs: [conts[i]['id']],
+      );
+
+      conts[i] = {...conts[i], "historys": historys};
+    }
+
+    List<Map<String, dynamic>> maps = List<Map<String, dynamic>>.from(
+      await db.query(
+        'map_points',
+        where: 'idrepository = ?',
+        whereArgs: [idRepository],
+      ),
     );
 
     repo = repo.map((item) => {...item, 'type': 'repo'}).toList();
@@ -887,7 +1018,15 @@ class DatabaseHelper {
 
     conts = conts.map((item) => {...item, 'type': 'cont'}).toList();
 
-    List<Map<String, dynamic>> all = [...links, ...notes, ...tasks, ...conts];
+    maps = maps.map((item) => {...item, 'type': 'maps'}).toList();
+
+    List<Map<String, dynamic>> all = [
+      ...links,
+      ...notes,
+      ...tasks,
+      ...conts,
+      ...maps,
+    ];
 
     all.sort((a, b) => (a['ordem'] as int).compareTo(b['ordem'] as int));
 
@@ -948,7 +1087,7 @@ class DatabaseHelper {
             DateTime datafinal = DateFormat(
               'dd/MM/yyyy',
             ).parse(item['datafinal']);
-            await insertTask(
+            int idTask = await insertTask(
               item['title'],
               item['desc'],
               datafinal,
@@ -956,6 +1095,18 @@ class DatabaseHelper {
               index,
               estado: item['estado'],
             );
+
+            if (item['quests'] != null && item['quests'] is List) {
+              for (int i = 0; i < item['quests'].length; i++) {
+                await insertTaskQuest(
+                  item['quests'][i]['title'],
+                  item['quests'][i]['desc'],
+                  idTask,
+                  i,
+                  completed: item['quests'][i]['completed'],
+                );
+              }
+            }
           }
         }
         if (item['type'] == 'cont') {
@@ -965,10 +1116,33 @@ class DatabaseHelper {
                     'conts',
                   )) ==
                   -1) {
-            await insertCont(
+            int idCont = await insertCont(
               item['title'],
               item['qntContMin'],
               item['qntContMax'],
+              idRep,
+              index,
+            );
+
+            if (item['historys'] != null && item['historys'] is List) {
+              for (int i = 0; i < item['historys'].length; i++) {
+                await insertContHistory(
+                  idCont,
+                  item['historys'][i]['direcao'],
+                  item['historys'][i]['contAtual'],
+                  item['historys'][i]['data'],
+                );
+              }
+            }
+          }
+        }
+        if (item['type'] == 'maps') {
+          if (!mesclagem) {
+            await insertMaps(
+              item['desc'],
+              item['endereco'],
+              item['lat'],
+              item['long'],
               idRep,
               index,
             );

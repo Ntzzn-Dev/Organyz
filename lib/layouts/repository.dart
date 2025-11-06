@@ -1,6 +1,5 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:organyz/main.dart';
 import 'package:organyz/itens/popuplist.dart';
 import 'package:organyz/themes.dart';
@@ -8,6 +7,7 @@ import '../itens/itemcard.dart';
 import '../database_helper.dart';
 import '../itens/popup.dart';
 import '../itens/textarealist.dart';
+import '../layouts/map.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
@@ -574,6 +574,73 @@ class _repositoryPageState extends State<Repo> {
     );
   }
 
+  Widget mapsCreate(Map<String, dynamic> item, int index) {
+    final ValueNotifier<String> titleNtf = ValueNotifier<String>(item['desc']);
+    ValueNotifier<String> subtitleNtf = ValueNotifier<String>(item['endereco']);
+
+    return ItemCard(
+      key: ValueKey('${item['idpoint']}_${item['desc']}'),
+      id: index,
+      titleNtf: titleNtf,
+      type: item['type'],
+      subtitleNtf: subtitleNtf,
+      onPressedDel: () async {
+        bool aceito = await showPopup(context, 'Deletar ponto no mapa?', []);
+        if (!aceito) {
+          return;
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Item deletado: ${titleNtf.value}')),
+        );
+        setState(() {
+          DatabaseHelper().removeMaps(item['idpoint']);
+          _loadItems();
+        });
+      },
+      doAnythingUp: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [],
+      ),
+      doAnythingDown: Row(children: [
+        ],
+      ),
+      onPressedEdit: () async {
+        showPopup(
+          context,
+          'Editar Mapa',
+          [
+            {'value': 'Descrição', 'type': 'necessary'},
+            {'value': 'Endereço', 'type': 'text'},
+          ],
+          fieldValues: [titleNtf.value, subtitleNtf.value],
+          onConfirm: (valores) async {
+            LatLng? coord = await getLatLngFromAddress(valores[1]);
+
+            await DatabaseHelper().updateMaps(
+              item['idpoint'],
+              valores[0],
+              valores[1],
+              (coord?.latitude ?? -23.5505).toDouble(),
+              (coord?.longitude ?? -46.6333).toDouble(),
+              item['ordem'],
+            );
+            await _loadItems();
+            await ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text('Mapa Adicionado')));
+            setState(() {
+              showButtons = false;
+            });
+          },
+        );
+      },
+      onPressedCard: () {
+        item['opened'] = !item['opened'];
+      },
+      isExpanded: item['opened'],
+    );
+  }
+
   Widget buildButtonState(
     List<Map<String, dynamic>> identificacao,
     List<VoidCallback> acoes,
@@ -814,6 +881,8 @@ class _repositoryPageState extends State<Repo> {
                             return tasksCreate(item, index);
                           case 'cont':
                             return contsCreate(item, index);
+                          case 'maps':
+                            return mapsCreate(item, index);
                           default:
                             return const SizedBox.shrink();
                         }
@@ -838,6 +907,36 @@ class _repositoryPageState extends State<Repo> {
                   ),
                 ),
 
+              buildAnimatedButton(330, Icons.map_outlined, () async {
+                showPopup(
+                  context,
+                  'Adicionar Mapa',
+                  [
+                    {'value': 'Descrição', 'type': 'necessary'},
+                    {'value': 'Endereço', 'type': 'text'},
+                  ],
+                  fieldValues: ['', ''],
+                  onConfirm: (valores) async {
+                    LatLng? coord = await getLatLngFromAddress(valores[1]);
+
+                    await DatabaseHelper().insertMaps(
+                      valores[0],
+                      valores[1],
+                      (coord?.latitude ?? -23.5505).toDouble(),
+                      (coord?.longitude ?? -46.6333).toDouble(),
+                      widget.id,
+                      ultimaOrdem,
+                    );
+                    await _loadItems();
+                    await ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Mapa Adicionado')),
+                    );
+                    setState(() {
+                      showButtons = false;
+                    });
+                  },
+                );
+              }),
               buildAnimatedButton(270, Icons.public, () async {
                 showPopup(
                   context,

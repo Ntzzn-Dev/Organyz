@@ -1,7 +1,6 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:organyz/layouts/map.dart';
 import 'itens/itemcard.dart';
 import 'database_helper.dart';
 import 'itens/popup.dart';
@@ -94,6 +93,18 @@ class _HomePageState extends State<HomePage> {
       MaterialPageRoute(
         builder: (context) => PendantPage(),
         settings: RouteSettings(name: 'calendar'),
+      ),
+    ).then((_) {
+      corPrimaria.value = Color.fromARGB(255, 243, 160, 34);
+    });
+  }
+
+  void _openMap() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => MapPage(),
+        settings: RouteSettings(name: 'map'),
       ),
     ).then((_) {
       corPrimaria.value = Color.fromARGB(255, 243, 160, 34);
@@ -227,104 +238,138 @@ class _HomePageState extends State<HomePage> {
           SizedBox(width: 5),
         ],
       ),
-      body: Column(
+      body: Stack(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Spacer(),
-                ElevatedButton(
-                  onPressed: () async {
-                    showPopup(
-                      context,
-                      'Adicionar Repositório',
-                      [
-                        {'value': 'Título', 'type': 'title'},
-                        {'value': 'Subtitulo', 'type': 'text'},
-                        {'value': 'Cor', 'type': 'hex'},
-                      ],
-                      onConfirm: (valores) async {
-                        await DatabaseHelper().insertRepo(
-                          valores[0],
-                          valores[1],
-                          valores[2],
-                          items.length,
-                        );
-                        await _loadItems();
-                        await ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Repositório criado')),
-                        );
+          Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Spacer(),
+                    ElevatedButton(
+                      onPressed: () async {
+                        _openMap();
                       },
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 38,
-                      vertical: 18,
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 38,
+                          vertical: 18,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.map_outlined),
+                          const SizedBox(width: 8),
+                          Text('Mapa'),
+                        ],
+                      ),
                     ),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.add),
-                      const SizedBox(width: 8),
-                      Text('Repositório'),
-                    ],
-                  ),
-                ),
-                Spacer(),
-                ElevatedButton(
-                  onPressed: () async {
-                    _openCalendar();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 38,
-                      vertical: 18,
+                    Spacer(),
+                    ElevatedButton(
+                      onPressed: () async {
+                        _openCalendar();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 38,
+                          vertical: 18,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.calendar_month),
+                          const SizedBox(width: 8),
+                          Text('Pendências'),
+                        ],
+                      ),
                     ),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.calendar_month),
-                      const SizedBox(width: 8),
-                      Text('Pendências'),
-                    ],
-                  ),
+                    Spacer(),
+                  ],
                 ),
-                Spacer(),
-              ],
-            ),
+              ),
+              Expanded(
+                child: ReorderableListView(
+                  onReorder: (oldIndex, newIndex) async {
+                    List<Map<String, dynamic>> modifiableItems =
+                        items
+                            .map((item) => Map<String, dynamic>.from(item))
+                            .toList();
+
+                    if (newIndex > oldIndex) newIndex -= 1;
+
+                    final item = modifiableItems.removeAt(oldIndex);
+                    modifiableItems.insert(newIndex, item);
+
+                    setState(() {
+                      items = modifiableItems;
+                    });
+
+                    List<int> orderedIds =
+                        modifiableItems
+                            .map<int>((item) => item['id'] as int)
+                            .toList();
+
+                    await DatabaseHelper().setOrdemRepo(orderedIds);
+                  },
+                  children: [
+                    for (int index = 0; index < items.length; index++)
+                      repoCreate(items[index], index),
+                  ],
+                ),
+              ),
+            ],
           ),
-          Expanded(
-            child: ReorderableListView(
-              onReorder: (oldIndex, newIndex) async {
-                List<Map<String, dynamic>> modifiableItems =
-                    items
-                        .map((item) => Map<String, dynamic>.from(item))
-                        .toList();
-
-                if (newIndex > oldIndex) newIndex -= 1;
-
-                final item = modifiableItems.removeAt(oldIndex);
-                modifiableItems.insert(newIndex, item);
-
-                setState(() {
-                  items = modifiableItems;
-                });
-
-                List<int> orderedIds =
-                    modifiableItems
-                        .map<int>((item) => item['id'] as int)
-                        .toList();
-
-                await DatabaseHelper().setOrdemRepo(orderedIds);
-              },
-              children: [
-                for (int index = 0; index < items.length; index++)
-                  repoCreate(items[index], index),
-              ],
-            ),
+          Stack(
+            children: [
+              Positioned(
+                bottom: 20,
+                right: 20,
+                child: Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color:
+                        Theme.of(context).extension<CustomColors>()!.concluido,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 6,
+                        offset: Offset(2, 2),
+                      ),
+                    ],
+                  ),
+                  child: IconButton(
+                    icon: Icon(Icons.add, color: Colors.white),
+                    onPressed: () {
+                      showPopup(
+                        context,
+                        'Adicionar Repositório',
+                        [
+                          {'value': 'Título', 'type': 'title'},
+                          {'value': 'Subtitulo', 'type': 'text'},
+                          {'value': 'Cor', 'type': 'hex'},
+                        ],
+                        onConfirm: (valores) async {
+                          await DatabaseHelper().insertRepo(
+                            valores[0],
+                            valores[1],
+                            valores[2],
+                            items.length,
+                          );
+                          await _loadItems();
+                          await ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Repositório criado')),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
