@@ -114,6 +114,8 @@ class DatabaseHelper {
             endereco TEXT,
             lat REAL,
             long REAL,
+            icon TEXT,
+            colorIcon TEXT,
             idrepository INTEGER,
             ordem INTEGER,
             FOREIGN KEY (idrepository) REFERENCES repository(id) ON DELETE CASCADE
@@ -739,6 +741,8 @@ class DatabaseHelper {
     String end,
     double lat,
     double long,
+    String icon,
+    String colorIcon,
     int idrep,
     int ordem,
   ) async {
@@ -749,6 +753,8 @@ class DatabaseHelper {
       'endereco': end,
       'lat': lat,
       'long': long,
+      'icon': icon,
+      'colorIcon': colorIcon,
       'idrepository': idrep,
       'ordem': ordem,
     });
@@ -767,13 +773,23 @@ class DatabaseHelper {
     String end,
     double lat,
     double long,
+    String icon,
+    String colorIcon,
     int ordem,
   ) async {
     final db = await database;
 
     await db.update(
       'map_points',
-      {'desc': desc, 'endereco': end, 'lat': lat, 'long': long, 'ordem': ordem},
+      {
+        'desc': desc,
+        'endereco': end,
+        'lat': lat,
+        'long': long,
+        'icon': icon,
+        'colorIcon': colorIcon,
+        'ordem': ordem,
+      },
       where: 'idpoint = ?',
       whereArgs: [id],
     );
@@ -1143,6 +1159,8 @@ class DatabaseHelper {
               item['endereco'],
               item['lat'],
               item['long'],
+              item['icon'],
+              item['colorIcon'],
               idRep,
               index,
             );

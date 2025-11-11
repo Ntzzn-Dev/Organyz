@@ -7,6 +7,7 @@ class ItemCard extends StatefulWidget {
   final String type;
   final ValueNotifier<String> titleNtf;
   final ValueNotifier<String> subtitleNtf;
+  final ValueNotifier<Icon>? iconNtf;
   final ValueNotifier<String>? descNtf;
   final ValueNotifier<Color>? colorNtf;
   final VoidCallback? onPressedDel;
@@ -24,6 +25,7 @@ class ItemCard extends StatefulWidget {
     required this.type,
     required this.titleNtf,
     required this.subtitleNtf,
+    this.iconNtf,
     this.descNtf,
     this.colorNtf,
     this.onPressedDel,
@@ -143,6 +145,16 @@ class _ItemCardState extends State<ItemCard> {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
+                      if (widget.iconNtf != null)
+                        ValueListenableBuilder<Icon>(
+                          valueListenable: widget.iconNtf!,
+                          builder: (context, value, _) {
+                            return Padding(
+                              padding: const EdgeInsets.fromLTRB(0, 7, 12, 7),
+                              child: value,
+                            );
+                          },
+                        ),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,

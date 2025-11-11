@@ -59,14 +59,6 @@ class _repositoryPageState extends State<Repo> {
     }
   }
 
-  Color hexToColor(String hex) {
-    hex = hex.replaceAll('#', '');
-    if (hex.length == 6) {
-      hex = 'FF$hex';
-    }
-    return Color(int.parse(hex, radix: 16));
-  }
-
   Color corState(int state) {
     final customColors = Theme.of(context).extension<CustomColors>()!;
 
@@ -577,6 +569,15 @@ class _repositoryPageState extends State<Repo> {
   Widget mapsCreate(Map<String, dynamic> item, int index) {
     final ValueNotifier<String> titleNtf = ValueNotifier<String>(item['desc']);
     ValueNotifier<String> subtitleNtf = ValueNotifier<String>(item['endereco']);
+    ValueNotifier<String> iconStringNtf = ValueNotifier<String>(item['icon']);
+    ValueNotifier<String> colorNtf = ValueNotifier<String>(item['colorIcon']);
+
+    ValueNotifier<Icon> iconNtf = ValueNotifier<Icon>(
+      Icon(
+        getIconFromString(iconStringNtf.value),
+        color: hexToColor(colorNtf.value),
+      ),
+    );
 
     return ItemCard(
       key: ValueKey('${item['idpoint']}_${item['desc']}'),
@@ -584,6 +585,7 @@ class _repositoryPageState extends State<Repo> {
       titleNtf: titleNtf,
       type: item['type'],
       subtitleNtf: subtitleNtf,
+      iconNtf: iconNtf,
       onPressedDel: () async {
         bool aceito = await showPopup(context, 'Deletar ponto no mapa?', []);
         if (!aceito) {
@@ -611,8 +613,15 @@ class _repositoryPageState extends State<Repo> {
           [
             {'value': 'Descrição', 'type': 'necessary'},
             {'value': 'Endereço', 'type': 'text'},
+            {'value': 'Icone', 'type': 'dropdown'},
+            {'value': 'Cor', 'type': 'hex'},
           ],
-          fieldValues: [titleNtf.value, subtitleNtf.value],
+          fieldValues: [
+            titleNtf.value,
+            subtitleNtf.value,
+            iconStringNtf.value,
+            colorNtf.value,
+          ],
           onConfirm: (valores) async {
             LatLng? coord = await getLatLngFromAddress(valores[1]);
 
@@ -622,12 +631,14 @@ class _repositoryPageState extends State<Repo> {
               valores[1],
               (coord?.latitude ?? -23.5505).toDouble(),
               (coord?.longitude ?? -46.6333).toDouble(),
+              valores[2],
+              valores[3],
               item['ordem'],
             );
             await _loadItems();
             await ScaffoldMessenger.of(
               context,
-            ).showSnackBar(const SnackBar(content: Text('Mapa Adicionado')));
+            ).showSnackBar(const SnackBar(content: Text('Mapa Atualizado')));
             setState(() {
               showButtons = false;
             });
@@ -914,8 +925,10 @@ class _repositoryPageState extends State<Repo> {
                   [
                     {'value': 'Descrição', 'type': 'necessary'},
                     {'value': 'Endereço', 'type': 'text'},
+                    {'value': 'Icone', 'type': 'dropdown'},
+                    {'value': 'Cor', 'type': 'hex'},
                   ],
-                  fieldValues: ['', ''],
+                  fieldValues: ['', '', '', ''],
                   onConfirm: (valores) async {
                     LatLng? coord = await getLatLngFromAddress(valores[1]);
 
@@ -924,6 +937,8 @@ class _repositoryPageState extends State<Repo> {
                       valores[1],
                       (coord?.latitude ?? -23.5505).toDouble(),
                       (coord?.longitude ?? -46.6333).toDouble(),
+                      valores[2],
+                      valores[3],
                       widget.id,
                       ultimaOrdem,
                     );

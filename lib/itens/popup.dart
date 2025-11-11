@@ -82,178 +82,269 @@ Future<bool> showPopup(
                           ? 3
                           : 0;
 
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        if (fieldLabels[index]['type'].toLowerCase().contains(
-                          'hex',
-                        )) ...[
-                          SizedBox(width: 5),
-                          Container(
-                            width: 24,
-                            height: 24,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: hexColors[index],
-                              border: Border.all(width: 2),
-                            ),
-                          ),
-                          SizedBox(width: 15),
-                        ],
-                        Expanded(
-                          child: TextField(
-                            controller: controllers[index],
-                            maxLines: tipoFormatacao == 0 ? null : 1,
-                            keyboardType:
-                                tipoFormatacao == 0
-                                    ? TextInputType.multiline
-                                    : null,
-                            textInputAction:
-                                tipoFormatacao == 0
-                                    ? TextInputAction.newline
-                                    : null,
-                            inputFormatters:
-                                tipoFormatacao == 1
-                                    ? [
-                                      TextInputFormatter.withFunction((
-                                        oldValue,
-                                        newValue,
-                                      ) {
-                                        String digitsOnly = newValue.text
-                                            .replaceAll(RegExp(r'[^0-9]'), '');
+                  if (fieldLabels[index]['type'].toLowerCase().contains(
+                    'dropdown',
+                  )) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          GestureDetector(
+                            onTap: () async {
+                              final selected = await showDialog<String>(
+                                context: context,
+                                builder: (context) {
+                                  final List<Map<String, dynamic>> iconOptions =
+                                      [
+                                        {'icon': Icons.home, 'name': 'home'},
+                                        {'icon': Icons.star, 'name': 'star'},
+                                        {
+                                          'icon': Icons.music_note,
+                                          'name': 'music_note',
+                                        },
+                                        {'icon': Icons.map, 'name': 'map'},
+                                        {'icon': Icons.flag, 'name': 'flag'},
+                                        {
+                                          'icon': Icons.favorite,
+                                          'name': 'favorite',
+                                        },
+                                        {'icon': Icons.work, 'name': 'work'},
+                                        {
+                                          'icon': Icons.settings,
+                                          'name': 'settings',
+                                        },
+                                      ];
 
-                                        if (newValue.text.length <
-                                            oldValue.text.length) {
-                                          if (digitsOnly.isNotEmpty &&
-                                              oldValue.text.contains('_')) {
-                                            digitsOnly = digitsOnly.substring(
-                                              0,
-                                              digitsOnly.length - 1,
-                                            );
-                                          }
-                                        }
+                                  return AlertDialog(
+                                    title: const Text('Escolha um ícone'),
+                                    content: SizedBox(
+                                      width: double.maxFinite,
+                                      child: GridView.builder(
+                                        shrinkWrap: true,
+                                        gridDelegate:
+                                            const SliverGridDelegateWithFixedCrossAxisCount(
+                                              crossAxisCount: 4,
+                                              mainAxisSpacing: 12,
+                                              crossAxisSpacing: 12,
+                                            ),
+                                        itemCount: iconOptions.length,
+                                        itemBuilder: (context, i) {
+                                          final icon = iconOptions[i];
+                                          return IconButton(
+                                            icon: Icon(icon['icon'], size: 28),
+                                            onPressed:
+                                                () => Navigator.of(
+                                                  context,
+                                                ).pop(icon['name']),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
 
-                                        String result = '';
-
-                                        for (int i = 0; i < 8; i++) {
-                                          if (digitsOnly.length > i) {
-                                            result += digitsOnly[i];
-                                          } else {
-                                            result += '_';
-                                          }
-                                        }
-
-                                        result =
-                                            '${result.substring(0, 2)}/${result.substring(2, 4)}/${result.substring(4)}';
-
-                                        return TextEditingValue(
-                                          text: result,
-                                          selection: TextSelection.collapsed(
-                                            offset: result.length,
-                                          ),
-                                        );
-                                      }),
-                                    ]
-                                    : tipoFormatacao == 2
-                                    ? [
-                                      TextInputFormatter.withFunction((
-                                        oldValue,
-                                        newValue,
-                                      ) {
-                                        String hexOnly = newValue.text
-                                            .replaceAll(
-                                              RegExp(r'[^0-9a-fA-F]'),
-                                              '',
-                                            );
-
-                                        if (newValue.text.length <
-                                            oldValue.text.length) {
-                                          if (hexOnly.isNotEmpty &&
-                                              oldValue.text.contains('_')) {
-                                            hexOnly = hexOnly.substring(
-                                              0,
-                                              hexOnly.length - 1,
-                                            );
-                                          }
-                                        }
-
-                                        String result = '';
-
-                                        for (int i = 0; i < 6; i++) {
-                                          if (hexOnly.length > i) {
-                                            result += hexOnly[i];
-                                          } else {
-                                            result += '_';
-                                          }
-                                        }
-
-                                        result = '#$result';
-
-                                        return TextEditingValue(
-                                          text: result,
-                                          selection: TextSelection.collapsed(
-                                            offset: result.length,
-                                          ),
-                                        );
-                                      }),
-                                    ]
-                                    : tipoFormatacao == 3
-                                    ? [
-                                      TextInputFormatter.withFunction((
-                                        oldValue,
-                                        newValue,
-                                      ) {
-                                        String digitsOnly = newValue.text
-                                            .replaceAll(RegExp(r'[^0-9]'), '');
-
-                                        return TextEditingValue(
-                                          text: digitsOnly,
-                                          selection: TextSelection.collapsed(
-                                            offset: digitsOnly.length,
-                                          ),
-                                        );
-                                      }),
-                                    ]
-                                    : [],
-                            decoration: InputDecoration(
-                              labelText: fieldLabels[index]['value'],
-                              errorText:
-                                  hasError[index] ? 'Campo inválido' : null,
-                              enabledBorder: OutlineInputBorder(
-                                borderSide: BorderSide(
-                                  color:
-                                      hasError[index]
-                                          ? Colors.red
-                                          : Colors.grey.shade400,
+                              if (selected != null) {
+                                setState(() {
+                                  controllers[index].text = selected;
+                                });
+                              }
+                            },
+                            child: AbsorbPointer(
+                              child: TextField(
+                                controller: controllers[index],
+                                decoration: InputDecoration(
+                                  labelText: 'Ícone',
+                                  suffixIcon: const Icon(Icons.arrow_drop_down),
+                                  border: const OutlineInputBorder(),
                                 ),
                               ),
                             ),
-                            onChanged: (text) {
-                              if (fieldLabels[index]['type']
-                                  .toLowerCase()
-                                  .contains('hex')) {
-                                try {
-                                  String cleaned =
-                                      text.replaceAll('#', '').trim();
-                                  if (cleaned.length == 6 ||
-                                      cleaned.length == 8) {
-                                    Color newColor = Color(
-                                      int.parse('0xFF$cleaned'),
-                                    );
-                                    setState(() {
-                                      hexColors[index] = newColor;
-                                    });
-                                  }
-                                } catch (_) {}
-                              }
-                            },
                           ),
-                        ),
-                      ],
-                    ),
-                  );
+                        ],
+                      ),
+                    );
+                  } else {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          if (fieldLabels[index]['type'].toLowerCase().contains(
+                            'hex',
+                          )) ...[
+                            SizedBox(width: 5),
+                            Container(
+                              width: 24,
+                              height: 24,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: hexColors[index],
+                                border: Border.all(width: 2),
+                              ),
+                            ),
+                            SizedBox(width: 15),
+                          ],
+                          Expanded(
+                            child: TextField(
+                              controller: controllers[index],
+                              maxLines: tipoFormatacao == 0 ? null : 1,
+                              keyboardType:
+                                  tipoFormatacao == 0
+                                      ? TextInputType.multiline
+                                      : null,
+                              textInputAction:
+                                  tipoFormatacao == 0
+                                      ? TextInputAction.newline
+                                      : null,
+                              inputFormatters:
+                                  tipoFormatacao == 1
+                                      ? [
+                                        TextInputFormatter.withFunction((
+                                          oldValue,
+                                          newValue,
+                                        ) {
+                                          String digitsOnly = newValue.text
+                                              .replaceAll(
+                                                RegExp(r'[^0-9]'),
+                                                '',
+                                              );
+
+                                          if (newValue.text.length <
+                                              oldValue.text.length) {
+                                            if (digitsOnly.isNotEmpty &&
+                                                oldValue.text.contains('_')) {
+                                              digitsOnly = digitsOnly.substring(
+                                                0,
+                                                digitsOnly.length - 1,
+                                              );
+                                            }
+                                          }
+
+                                          String result = '';
+
+                                          for (int i = 0; i < 8; i++) {
+                                            if (digitsOnly.length > i) {
+                                              result += digitsOnly[i];
+                                            } else {
+                                              result += '_';
+                                            }
+                                          }
+
+                                          result =
+                                              '${result.substring(0, 2)}/${result.substring(2, 4)}/${result.substring(4)}';
+
+                                          return TextEditingValue(
+                                            text: result,
+                                            selection: TextSelection.collapsed(
+                                              offset: result.length,
+                                            ),
+                                          );
+                                        }),
+                                      ]
+                                      : tipoFormatacao == 2
+                                      ? [
+                                        TextInputFormatter.withFunction((
+                                          oldValue,
+                                          newValue,
+                                        ) {
+                                          String hexOnly = newValue.text
+                                              .replaceAll(
+                                                RegExp(r'[^0-9a-fA-F]'),
+                                                '',
+                                              );
+
+                                          if (newValue.text.length <
+                                              oldValue.text.length) {
+                                            if (hexOnly.isNotEmpty &&
+                                                oldValue.text.contains('_')) {
+                                              hexOnly = hexOnly.substring(
+                                                0,
+                                                hexOnly.length - 1,
+                                              );
+                                            }
+                                          }
+
+                                          String result = '';
+
+                                          for (int i = 0; i < 6; i++) {
+                                            if (hexOnly.length > i) {
+                                              result += hexOnly[i];
+                                            } else {
+                                              result += '_';
+                                            }
+                                          }
+
+                                          result = '#$result';
+
+                                          return TextEditingValue(
+                                            text: result,
+                                            selection: TextSelection.collapsed(
+                                              offset: result.length,
+                                            ),
+                                          );
+                                        }),
+                                      ]
+                                      : tipoFormatacao == 3
+                                      ? [
+                                        TextInputFormatter.withFunction((
+                                          oldValue,
+                                          newValue,
+                                        ) {
+                                          String digitsOnly = newValue.text
+                                              .replaceAll(
+                                                RegExp(r'[^0-9]'),
+                                                '',
+                                              );
+
+                                          return TextEditingValue(
+                                            text: digitsOnly,
+                                            selection: TextSelection.collapsed(
+                                              offset: digitsOnly.length,
+                                            ),
+                                          );
+                                        }),
+                                      ]
+                                      : [],
+                              decoration: InputDecoration(
+                                labelText: fieldLabels[index]['value'],
+                                errorText:
+                                    hasError[index] ? 'Campo inválido' : null,
+                                enabledBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(
+                                    color:
+                                        hasError[index]
+                                            ? Colors.red
+                                            : Colors.grey.shade400,
+                                  ),
+                                ),
+                              ),
+                              onChanged: (text) {
+                                if (fieldLabels[index]['type']
+                                    .toLowerCase()
+                                    .contains('hex')) {
+                                  try {
+                                    String cleaned =
+                                        text.replaceAll('#', '').trim();
+                                    if (cleaned.length == 6 ||
+                                        cleaned.length == 8) {
+                                      Color newColor = Color(
+                                        int.parse('0xFF$cleaned'),
+                                      );
+                                      setState(() {
+                                        hexColors[index] = newColor;
+                                      });
+                                    }
+                                  } catch (_) {}
+                                }
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
                 }),
               ),
             ),

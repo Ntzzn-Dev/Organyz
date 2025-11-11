@@ -78,3 +78,8 @@ Todas as mudanças neste projeto serão documentadas aqui.
 - Adição da função de mapa, onde é possivel criar marcadores no mapa mundi.  
 - Realocamento do botão de adicionar repositório.  
 - Salvamento de pontos de interesse no mapa através de endereços.  
+
+### version 8.1
+- Adição de um mapa com outro tema de cor.
+- Adição da funcionalidade de clicar no mapa e criar ou alterar um ponto atraves das coordenadas do clique.  
+- Adição de controle de icone no mapa.  
