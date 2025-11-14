@@ -90,6 +90,7 @@ class DatabaseHelper {
             title TEXT,
             qntContMin INTEGER,
             qntContMax INTEGER,
+            contIncrement INTEGER,
             contAtual INTEGER,
             idrepository INTEGER,
             ordem INTEGER,
@@ -99,6 +100,7 @@ class DatabaseHelper {
 
         await db.execute('''
           CREATE TABLE conts_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             idconts INTEGER,
             contAtual INTEGER,
             direcao TEXT,
@@ -123,6 +125,25 @@ class DatabaseHelper {
         ''');
       },
     );
+  }
+
+  Future<int> countItemsFromRepository(int idRep) async {
+    final db = await database;
+
+    final tables = ['links', 'notes', 'tasks', 'conts', 'map_points'];
+
+    int total = 0;
+
+    for (final table in tables) {
+      final result = await db.rawQuery(
+        'SELECT COUNT(*) as count FROM $table WHERE idrepository = ?',
+        [idRep],
+      );
+
+      total += result.first['count'] as int;
+    }
+
+    return total;
   }
 
   Future<void> deleteDatabaseFile() async {
@@ -285,11 +306,12 @@ class DatabaseHelper {
   Future<void> insertLink(
     String title,
     String url,
-    int idRepository,
-    int ordem,
-  ) async {
+    int idRepository, {
+    int? ordemM,
+  }) async {
     final db = await database;
     final finalTitle = await verifyTitle(title, 'links');
+    int ordem = ordemM ?? await countItemsFromRepository(idRepository);
 
     await db.insert('links', {
       'title': finalTitle,
@@ -329,11 +351,12 @@ class DatabaseHelper {
 
   Future<void> insertNote(
     String title,
-    int idRepository,
-    int ordem, {
+    int idRepository, {
     String desc = '',
+    int? ordemM,
   }) async {
     final db = await database;
+    int ordem = ordemM ?? await countItemsFromRepository(idRepository);
 
     await db.insert('notes', {
       'title': title,
@@ -417,11 +440,13 @@ class DatabaseHelper {
     String title,
     String desc,
     DateTime date,
-    int idRepository,
-    int ordem, {
+    int idRepository, {
     int estado = 0,
+    int? ordemM,
   }) async {
     final db = await database;
+
+    int ordem = ordemM ?? await countItemsFromRepository(idRepository);
 
     String formattedDate = DateFormat('dd/MM/yyyy').format(date);
     int idTask = await db.insert('tasks', {
@@ -589,16 +614,20 @@ class DatabaseHelper {
     String title,
     int qntContMin,
     int qntContMax,
-    int idRepository,
-    int ordem,
-  ) async {
+    int contIncrement,
+    int idRepository, {
+    int? ordemM,
+  }) async {
     final db = await database;
     final finalTitle = await verifyTitle(title, 'conts');
+
+    int ordem = ordemM ?? await countItemsFromRepository(idRepository);
 
     final id = await db.insert('conts', {
       'title': finalTitle,
       'qntContMin': qntContMin,
       'qntContMax': qntContMax,
+      'contIncrement': contIncrement,
       'contAtual': qntContMin,
       'idrepository': idRepository,
       'ordem': ordem,
@@ -617,6 +646,7 @@ class DatabaseHelper {
     String title,
     int qntContMin,
     int qntContMax,
+    int contIncrement,
     int contAtual,
     int ordem,
   ) async {
@@ -629,6 +659,7 @@ class DatabaseHelper {
         'title': finalTitle,
         'qntContMin': qntContMin,
         'qntContMax': qntContMax,
+        'contIncrement': contIncrement,
         'contAtual': contAtual,
         'ordem': ordem,
       },
@@ -743,10 +774,11 @@ class DatabaseHelper {
     double long,
     String icon,
     String colorIcon,
-    int idrep,
-    int ordem,
-  ) async {
+    int idRepository, {
+    int? ordemM,
+  }) async {
     final db = await database;
+    int ordem = ordemM ?? await countItemsFromRepository(idRepository);
 
     final id = await db.insert('map_points', {
       'desc': desc,
@@ -755,7 +787,7 @@ class DatabaseHelper {
       'long': long,
       'icon': icon,
       'colorIcon': colorIcon,
-      'idrepository': idrep,
+      'idrepository': idRepository,
       'ordem': ordem,
     });
 
@@ -1000,10 +1032,12 @@ class DatabaseHelper {
       tasks[i] = {...tasks[i], "quests": quests};
     }
 
-    List<Map<String, dynamic>> conts = await db.query(
-      'conts',
-      where: 'idrepository = ?',
-      whereArgs: [idRepository],
+    List<Map<String, dynamic>> conts = List<Map<String, dynamic>>.from(
+      await db.query(
+        'conts',
+        where: 'idrepository = ?',
+        whereArgs: [idRepository],
+      ),
     );
 
     for (int i = 0; i < conts.length; i++) {
@@ -1015,6 +1049,7 @@ class DatabaseHelper {
 
       conts[i] = {...conts[i], "historys": historys};
     }
+    log(conts.length.toString());
 
     List<Map<String, dynamic>> maps = List<Map<String, dynamic>>.from(
       await db.query(
@@ -1080,7 +1115,7 @@ class DatabaseHelper {
                     'links',
                   )) ==
                   -1) {
-            await insertLink(item['title'], item['url'], idRep, index);
+            await insertLink(item['title'], item['url'], idRep, ordemM: index);
           }
         }
         if (item['type'] == 'note') {
@@ -1090,7 +1125,12 @@ class DatabaseHelper {
                     'notes',
                   )) ==
                   -1) {
-            await insertNote(item['title'], idRep, index, desc: item['desc']);
+            await insertNote(
+              item['title'],
+              idRep,
+              ordemM: index,
+              desc: item['desc'],
+            );
           }
         }
         if (item['type'] == 'task') {
@@ -1108,7 +1148,7 @@ class DatabaseHelper {
               item['desc'],
               datafinal,
               idRep,
-              index,
+              ordemM: index,
               estado: item['estado'],
             );
 
@@ -1136,8 +1176,9 @@ class DatabaseHelper {
               item['title'],
               item['qntContMin'],
               item['qntContMax'],
+              item['contIncrement'],
               idRep,
-              index,
+              ordemM: index,
             );
 
             if (item['historys'] != null && item['historys'] is List) {
@@ -1162,7 +1203,7 @@ class DatabaseHelper {
               item['icon'],
               item['colorIcon'],
               idRep,
-              index,
+              ordemM: index,
             );
           }
         }

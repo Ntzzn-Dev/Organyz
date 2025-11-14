@@ -34,7 +34,6 @@ class Repo extends StatefulWidget {
 
 class _repositoryPageState extends State<Repo> {
   List<Map<String, dynamic>> itens = [];
-  int ultimaOrdem = 0;
   late String titulo;
   late String? cor;
   bool showButtons = false;
@@ -51,7 +50,6 @@ class _repositoryPageState extends State<Repo> {
 
   Future<void> _loadItems() async {
     itens = await DatabaseHelper().getAllItemsOrdered(widget.id);
-    ultimaOrdem = itens.length;
     setState(() {});
 
     if (cor != '') {
@@ -412,6 +410,7 @@ class _repositoryPageState extends State<Repo> {
     int cont = item['contAtual'];
     int contMin = item['qntContMin'];
     int contMax = item['qntContMax'];
+    int contIncrement = item['contIncrement'];
 
     return ItemCard(
       key: ValueKey('${item['id']}_${item['title']}'),
@@ -438,7 +437,7 @@ class _repositoryPageState extends State<Repo> {
           ElevatedButton(
             onPressed: () async {
               if (cont > contMin) {
-                cont--;
+                cont -= contIncrement;
               }
 
               await DatabaseHelper().saveCont(item['id'], 'Subtração', cont);
@@ -450,7 +449,7 @@ class _repositoryPageState extends State<Repo> {
           const SizedBox(width: 4),
           ElevatedButton(
             onPressed: () async {
-              cont++;
+              cont += contIncrement;
 
               if (cont > contMax) {
                 cont = contMin;
@@ -527,12 +526,19 @@ class _repositoryPageState extends State<Repo> {
             {'value': 'Título', 'type': 'necessary'},
             {'value': 'Quantidade Mínima', 'type': 'num'},
             {'value': 'Quantidade Máxima', 'type': 'num'},
+            {'value': 'Valor de incremento', 'type': 'num'},
           ],
-          fieldValues: [titleNtf.value, contMin.toString(), contMax.toString()],
+          fieldValues: [
+            titleNtf.value,
+            contMin.toString(),
+            contMax.toString(),
+            contIncrement.toString(),
+          ],
           onConfirm: (valores) async {
             String title = valores[0];
             contMin = int.parse(valores[1]);
             contMax = int.parse(valores[2]);
+            contIncrement = int.parse(valores[3]);
 
             cont =
                 cont < contMin
@@ -546,6 +552,7 @@ class _repositoryPageState extends State<Repo> {
               title,
               contMin,
               contMax,
+              contIncrement,
               cont,
               item['ordem'],
             );
@@ -949,7 +956,6 @@ class _repositoryPageState extends State<Repo> {
                       valores[2],
                       valores[3],
                       widget.id,
-                      ultimaOrdem,
                     );
                     await _loadItems();
                     await ScaffoldMessenger.of(context).showSnackBar(
@@ -974,7 +980,6 @@ class _repositoryPageState extends State<Repo> {
                       valores[0],
                       valores[1],
                       widget.id,
-                      ultimaOrdem,
                     );
                     await _loadItems();
                     await ScaffoldMessenger.of(context).showSnackBar(
@@ -994,11 +999,7 @@ class _repositoryPageState extends State<Repo> {
                     {'value': 'Título', 'type': 'necessary'},
                   ],
                   onConfirm: (valores) async {
-                    await DatabaseHelper().insertNote(
-                      valores[0],
-                      widget.id,
-                      ultimaOrdem,
-                    );
+                    await DatabaseHelper().insertNote(valores[0], widget.id);
                     await _loadItems();
                     await ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Nota Adicionada')),
@@ -1025,7 +1026,6 @@ class _repositoryPageState extends State<Repo> {
                       valores[1],
                       date,
                       widget.id,
-                      ultimaOrdem,
                     );
                     await _loadItems();
                     await ScaffoldMessenger.of(context).showSnackBar(
@@ -1045,16 +1045,17 @@ class _repositoryPageState extends State<Repo> {
                     {'value': 'Título', 'type': 'necessary'},
                     {'value': 'Quantidade Mínima', 'type': 'num'},
                     {'value': 'Quantidade Máxima', 'type': 'num'},
+                    {'value': 'Valor de Incremento', 'type': 'num'},
                   ],
-                  fieldValues: ['', '0', '100'],
+                  fieldValues: ['', '0', '100', '1'],
                   onConfirm: (valores) async {
                     await DatabaseHelper().saveCont(
                       await DatabaseHelper().insertCont(
                         valores[0],
                         int.parse(valores[1]),
                         int.parse(valores[2]),
+                        int.parse(valores[3]),
                         widget.id,
-                        ultimaOrdem,
                       ),
                       'Adição',
                       int.parse(valores[1]),

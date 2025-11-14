@@ -198,6 +198,13 @@ class _HomePageState extends State<HomePage> {
           SizedBox(width: 5),
           ElevatedButton(
             onPressed: () async {
+              await DatabaseHelper().deleteDatabaseFile();
+            },
+            child: Icon(Icons.delete),
+          ),
+          SizedBox(width: 5),
+          ElevatedButton(
+            onPressed: () async {
               showPopup(
                 context,
                 'Importar repositório',

@@ -87,3 +87,8 @@ Todas as mudanças neste projeto serão documentadas aqui.
 ### version 8.2 
 - Criação de rotas, com pontos para medir distancias.  
 - Correção nas cores do dropdown de seleção de icones.
+
+### version 8.3
+- Correção na criação de ordem.  
+- Contagem agora tem incremento, para escolher a quantidade que sera adicionada ao aumentar.  
+- Correção na exportação da contagem.  

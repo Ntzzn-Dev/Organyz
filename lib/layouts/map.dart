@@ -205,7 +205,6 @@ class _MapPageState extends State<MapPage> {
                           valores[2],
                           valores[3],
                           item['id'],
-                          900, // Consertar ordem
                         );
 
                         await _loadItems();
