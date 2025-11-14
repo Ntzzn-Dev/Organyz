@@ -826,6 +826,7 @@ class _repositoryPageState extends State<Repo> {
                     {'label': 'Note', 'icon': Icons.sticky_note_2},
                     {'label': 'Task', 'icon': Icons.task_rounded},
                     {'label': 'Cont', 'icon': Icons.plus_one},
+                    {'label': 'Maps', 'icon': Icons.map_outlined},
                   ],
                   [
                     () async {
@@ -857,6 +858,14 @@ class _repositoryPageState extends State<Repo> {
                       itens =
                           itens
                               .where((item) => item['type'] == 'cont')
+                              .toList();
+                      setState(() {});
+                    },
+                    () async {
+                      await _loadItems();
+                      itens =
+                          itens
+                              .where((item) => item['type'] == 'maps')
                               .toList();
                       setState(() {});
                     },

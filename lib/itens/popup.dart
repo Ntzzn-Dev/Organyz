@@ -37,7 +37,6 @@ Future<bool> showPopup(
         index < fieldValues.length &&
         fieldValues[index] != '') {
       try {
-        // Limpa o valor e transforma em cor
         String cleaned = fieldValues[index].replaceAll('#', '').trim();
         return Color(int.parse('0xFF$cleaned'));
       } catch (_) {
@@ -114,6 +113,14 @@ Future<bool> showPopup(
                                           'icon': Icons.settings,
                                           'name': 'settings',
                                         },
+                                        {
+                                          'icon': Icons.person,
+                                          'name': 'person',
+                                        },
+                                        {
+                                          'icon': Icons.location_on,
+                                          'name': 'location',
+                                        },
                                       ];
 
                                   return AlertDialog(
@@ -155,9 +162,17 @@ Future<bool> showPopup(
                               child: TextField(
                                 controller: controllers[index],
                                 decoration: InputDecoration(
-                                  labelText: 'Ícone',
-                                  suffixIcon: const Icon(Icons.arrow_drop_down),
-                                  border: const OutlineInputBorder(),
+                                  labelText: fieldLabels[index]['value'],
+                                  errorText:
+                                      hasError[index] ? 'Campo inválido' : null,
+                                  enabledBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(
+                                      color:
+                                          hasError[index]
+                                              ? Colors.red
+                                              : Colors.grey.shade400,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),

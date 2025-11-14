@@ -53,13 +53,14 @@ Map<String, Color> gerarTons(Color base) {
 ThemeData lighttheme(Color corPrimaria) {
   final tons = gerarTons(corPrimaria);
   return ThemeData(
-    primarySwatch: Colors.indigo,
+    primarySwatch: Colors.orange,
     scaffoldBackgroundColor: Color.fromARGB(255, 242, 242, 242),
     appBarTheme: AppBarTheme(
       backgroundColor: Color.fromARGB(255, 237, 237, 237),
       foregroundColor: corPrimaria,
       surfaceTintColor: Color.fromARGB(255, 242, 242, 242),
     ),
+    iconTheme: const IconThemeData(color: Color.fromARGB(255, 255, 153, 0)),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: Color.fromARGB(255, 242, 242, 242),
@@ -123,6 +124,7 @@ ThemeData darkTheme(Color corPrimaria) {
       foregroundColor: corPrimaria,
       surfaceTintColor: Color.fromARGB(255, 37, 37, 37),
     ),
+    iconTheme: const IconThemeData(color: Color.fromARGB(255, 255, 153, 0)),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: Color.fromARGB(255, 64, 64, 64),

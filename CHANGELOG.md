@@ -83,3 +83,7 @@ Todas as mudanças neste projeto serão documentadas aqui.
 - Adição de um mapa com outro tema de cor.
 - Adição da funcionalidade de clicar no mapa e criar ou alterar um ponto atraves das coordenadas do clique.  
 - Adição de controle de icone no mapa.  
+
+### version 8.2 
+- Criação de rotas, com pontos para medir distancias.  
+- Correção nas cores do dropdown de seleção de icones.
